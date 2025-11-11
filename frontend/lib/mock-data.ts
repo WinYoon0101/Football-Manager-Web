@@ -1,5 +1,10 @@
+// ============================
+// ⚽ MOCK DATA — FOOTBALL LEAGUE MANAGER
+// ============================
+
 import type { Team, Match, Regulation, Season, User } from "./types"
 
+// --- Quy định mặc định ---
 export const defaultRegulation: Regulation = {
   id: "reg-default",
   name: "Quy Định Chuẩn",
@@ -16,6 +21,7 @@ export const defaultRegulation: Regulation = {
   rankingPriority: ["points", "goalDiff", "goalsFor"],
 }
 
+// --- Danh sách quy định đã lưu ---
 export const savedRegulations: Regulation[] = [
   {
     id: "reg-1",
@@ -49,6 +55,7 @@ export const savedRegulations: Regulation[] = [
   },
 ]
 
+// --- Danh sách đội bóng ---
 export const mockTeams: Team[] = [
   {
     id: "team-1",
@@ -84,12 +91,11 @@ export const mockTeams: Team[] = [
     id: "team-4",
     name: "Becamex Bình Dương",
     city: "Bình Dương",
-    players: [
-      // Players for Becamex Bình Dương can be added here
-    ],
+    players: [],
   },
 ]
 
+// --- Danh sách trận đấu ---
 export const mockMatches: Match[] = [
   {
     id: "match-1",
@@ -124,6 +130,7 @@ export const mockMatches: Match[] = [
     status: "completed",
     date: "2025-01-11",
     time: "17:00",
+    venue: "Sân Hòa Xuân",
     goals: [
       { id: "g4", matchId: "match-2", scorerId: "p9", teamId: "team-3", goalType: "C", minute: 28 },
       { id: "g5", matchId: "match-2", scorerId: "p1", teamId: "team-1", goalType: "A", minute: 55 },
@@ -131,11 +138,12 @@ export const mockMatches: Match[] = [
   },
 ]
 
+// --- Danh sách mùa giải ---
 export const mockSeasons: Season[] = [
   {
     id: "season-1",
     name: "Giải bóng đá hạng Nhất Quốc gia",
-    status: "not_started",
+    status: "not-started",
     startDate: "2026-03-05",
     endDate: "2026-12-01",
     teamCount: 11,
@@ -170,19 +178,20 @@ export const mockSeasons: Season[] = [
   },
 ]
 
+// --- Danh sách người dùng ---
 export const mockUsers: User[] = [
   {
     id: "user-1",
-    name: "Nguyễn Văn Admin",
+    name: "Admin",
     email: "admin@football.vn",
     role: "admin",
-    avatar: "/placeholder.svg?height=40&width=40",
     username: "admin",
+    avatar: "/placeholder.svg?height=40&width=40",
     createdAt: "2024-01-01",
   },
   {
     id: "user-2",
-    name: "Trần Thị Manager",
+    name: "Trần Thị B",
     email: "manager@football.vn",
     role: "manager",
     username: "manager",
@@ -190,7 +199,7 @@ export const mockUsers: User[] = [
   },
   {
     id: "user-3",
-    name: "Lê Văn Quản Lý",
+    name: "Lê Văn A",
     email: "quanly@football.vn",
     role: "manager",
     username: "quanly",
