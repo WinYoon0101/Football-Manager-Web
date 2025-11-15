@@ -1,170 +1,235 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, UploadCloud, ArrowLeft, MoreVertical } from "lucide-react";
+
+import {
+  Plus,
+  Search,
+  UploadCloud,
+  ArrowLeft,
+  MoreVertical,
+  Trophy,
+  Pencil,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 
 import {
   DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 import type { Team } from "@/lib/types";
-
 import { toast } from "react-toastify";
+import { teamsAPI } from "@/lib/api/teams";
 
-interface TeamsModuleProps {
-  teams: Team[];
-  setTeams: (teams: Team[]) => void;
-}
 
-export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
+
+export default function TeamsModule() {
   const [searchTerm, setSearchTerm] = useState("");
-
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [showDetail, setShowDetail] = useState(false);
 
-  // ADD TEAM dialog
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  // Fetch teams từ API khi component mount
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        setLoading(true);
+        const data = await teamsAPI.getAll();
+        setTeams(data);
+      } catch (error) {
+        toast.error("Không thể tải danh sách đội bóng");
+        console.error("Error fetching teams:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTeams();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // EDIT TEAM dialog
+  // ADD TEAM
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newTeam, setNewTeam] = useState({
+    name: "",
+    homeStadium: "",
+    image: null as File | null,
+  });
+  const [previewAddLogo, setPreviewAddLogo] = useState<string | null>(null);
+
+  // EDIT TEAM
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editTeam, setEditTeam] = useState<Team | null>(null);
   const [editLogo, setEditLogo] = useState<File | null>(null);
+  const [previewEditLogo, setPreviewEditLogo] = useState<string | null>(null);
 
-  // DELETE CONFIRM dialog
+  // DELETE TEAM
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
+  const [deleteTeamId, setDeleteTeamId] = useState<number | null>(null);
 
-  const [newTeam, setNewTeam] = useState({
-    name: "",
-    city: "",
-    logo: null as File | null,
-  });
+  // --------------------
+  // HANDLE PREVIEW IMAGE
+  // --------------------
 
   const handleFileChangeAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setNewTeam({ ...newTeam, logo: e.target.files[0] });
-    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setNewTeam({ ...newTeam, image: file });
+    setPreviewAddLogo(URL.createObjectURL(file));
   };
 
   const handleFileChangeEdit = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setEditLogo(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setEditLogo(file);
+    setPreviewEditLogo(URL.createObjectURL(file));
+  };
+
+  // SEARCH
+  const filteredTeams = teams.filter(
+    (t) =>
+      t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.homeStadium ?? "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+  );
+
+  // DELETE
+  const confirmDelete = async () => {
+    if (!deleteTeamId) return;
+
+    try {
+      setIsSubmitting(true);
+      await teamsAPI.delete(deleteTeamId);
+      setTeams(teams.filter((t) => t.id !== deleteTeamId));
+      toast.success("Đã xóa đội bóng!");
+      setShowDeleteDialog(false);
+      setDeleteTeamId(null);
+    } catch (error: any) {
+      toast.error(error.message || "Không thể xóa đội bóng");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const filteredTeams = teams.filter(
-    (team) =>
-      team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      team.city.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // ----------------------
-  // DELETE team (with popup)
-  // ----------------------
-  const confirmDelete = () => {
-    if (!deleteTeamId) return;
-
-    setTeams(teams.filter((t) => t.id !== deleteTeamId));
-    toast.success("Đã xóa đội bóng!");
-
-    setShowDeleteDialog(false);
-    setDeleteTeamId(null);
-  };
-
-  // ----------------------
-  // VIEW DETAIL
-  // ----------------------
+  // DETAIL
   const handleViewDetail = (team: Team) => {
     setSelectedTeam(team);
     setShowDetail(true);
   };
 
-  // ----------------------
-  // ADD NEW TEAM
-  // ----------------------
-  const handleAddTeam = () => {
-    if (!newTeam.name || !newTeam.city) {
+  // ADD TEAM
+  const handleAddTeam = async () => {
+    if (!newTeam.name || !newTeam.homeStadium) {
       toast.error("Vui lòng điền đầy đủ thông tin!");
       return;
     }
 
-    const team = {
-      id: `team-${Date.now()}`,
-      name: newTeam.name,
-      city: newTeam.city,
-      players: [],
-      ...(newTeam.logo ? { logo: URL.createObjectURL(newTeam.logo) } : {}),
-    } as Team;
+    try {
+      setIsSubmitting(true);
+      const createdTeam = await teamsAPI.create({
+        name: newTeam.name,
+        homeStadium: newTeam.homeStadium,
+        logo: newTeam.image || undefined,
+      });
 
-    setTeams([...teams, team]);
+      setTeams([...teams, createdTeam]);
+      toast.success("Thêm đội bóng thành công!");
 
-    toast.success("Thêm đội bóng thành công!");
-
-    setNewTeam({ name: "", city: "", logo: null });
-    setShowAddDialog(false);
+      setNewTeam({ name: "", homeStadium: "", image: null });
+      setPreviewAddLogo(null);
+      setShowAddDialog(false);
+    } catch (error: any) {
+      toast.error(error.message || "Không thể thêm đội bóng");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // ----------------------
-  // OPEN EDIT
-  // ----------------------
+  // EDIT TEAM
   const openEditDialog = (team: Team) => {
     setEditTeam(team);
+    setPreviewEditLogo(null);
     setEditLogo(null);
     setShowEditDialog(true);
   };
 
-  // ----------------------
-  // SAVE EDIT TEAM
-  // ----------------------
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editTeam) return;
 
-    const updated = teams.map((t) =>
-      t.id === editTeam.id
-        ? ({
-            ...editTeam,
-            ...(editLogo ? { logo: URL.createObjectURL(editLogo) } : { logo: editTeam.logo }),
-          } as Team)
-        : t
-    );
+    try {
+      setIsSubmitting(true);
+      const updatedTeam = await teamsAPI.update(editTeam.id, {
+        name: editTeam.name,
+        homeStadium: editTeam.homeStadium ?? undefined,
+        logo: editLogo || undefined,
+      });
 
-    setTeams(updated);
-    toast.success("Cập nhật đội bóng thành công!");
+      const updated = teams.map((t) =>
+        t.id === editTeam.id ? updatedTeam : t
+      );
 
-    setShowEditDialog(false);
-    setEditLogo(null);
+      setTeams(updated);
+      toast.success("Cập nhật thành công!");
+
+      setShowEditDialog(false);
+      setEditLogo(null);
+      setPreviewEditLogo(null);
+    } catch (error: any) {
+      toast.error(error.message || "Không thể cập nhật đội bóng");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // ======================
-  //      DETAIL VIEW
-  // ======================
+  // ---------------------------------------
+  // DETAIL PAGE
+  // ---------------------------------------
   if (showDetail && selectedTeam) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-2xl font-bold">{selectedTeam.name}</h3>
-            <p className="text-muted-foreground">{selectedTeam.city}</p>
+            <p className="text-muted-foreground">
+              {selectedTeam.homeStadium}
+            </p>
           </div>
 
-          <Button variant="outline" onClick={() => setShowDetail(false)} className="gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowDetail(false)}
+            className="gap-2"
+          >
             <ArrowLeft className="h-4 w-4" />
             Quay Lại
           </Button>
@@ -177,42 +242,54 @@ export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
-                <span className="text-sm text-muted-foreground">Tên đội:</span>
+                <span className="text-sm text-muted-foreground">
+                  Tên đội:
+                </span>
                 <p className="font-semibold">{selectedTeam.name}</p>
               </div>
+
               <div>
-                <span className="text-sm text-muted-foreground">Sân nhà:</span>
-                <p className="font-semibold">{selectedTeam.city}</p>
+                <span className="text-sm text-muted-foreground">
+                  Sân nhà:
+                </span>
+                <p className="font-semibold">{selectedTeam.homeStadium}</p>
               </div>
+
               <div>
-                <span className="text-sm text-muted-foreground">Số cầu thủ:</span>
-                <p className="font-semibold">{selectedTeam.players.length}</p>
+                <span className="text-sm text-muted-foreground">
+                  Số cầu thủ:
+                </span>
+                <p className="font-semibold">
+                  {selectedTeam.players?.length ?? 0}
+                </p>
               </div>
             </CardContent>
           </Card>
 
           <Card className="md:col-span-2">
             <CardHeader>
-              <CardTitle>Danh Sách Cầu Thủ</CardTitle>
+              <CardTitle>Danh sách cầu thủ</CardTitle>
             </CardHeader>
+
             <CardContent>
-              {selectedTeam.players.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">Chưa có cầu thủ nào</p>
+              {(selectedTeam.players?.length ?? 0) === 0 ? (
+                <p className="text-muted-foreground text-center py-4">
+                  Chưa có cầu thủ nào
+                </p>
               ) : (
                 <div className="space-y-2">
-                  {selectedTeam.players.map((player) => (
+                  {(selectedTeam.players ?? []).map((p) => (
                     <div
-                      key={player.id}
+                      key={p.id}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                          {player.jerseyNumber}
-                        </div>
+                        
+
                         <div>
-                          <p className="font-semibold">{player.name}</p>
+                          <p className="font-semibold">{p.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {player.age} tuổi • {player.type === "domestic" ? "Nội" : "Ngoại"}
+                           {p.playerTypeId === 1 ? "Trong nước" : "Nước ngoài"}
                           </p>
                         </div>
                       </div>
@@ -227,9 +304,18 @@ export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
     );
   }
 
-  // ======================
-  //      LIST VIEW
-  // ======================
+  // ---------------------------------------
+  // LIST VIEW
+  // ---------------------------------------
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -237,58 +323,98 @@ export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Danh Sách Đội Bóng</CardTitle>
-              <CardDescription>Quản lý các đội tham gia giải vô địch</CardDescription>
+              <CardDescription>
+                Quản lý các đội tham gia giải
+              </CardDescription>
             </div>
 
-            {/* ADD TEAM */}
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <Dialog
+              open={showAddDialog}
+              onOpenChange={setShowAddDialog}
+            >
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Thêm Đội Bóng
+                  Thêm đội bóng
                 </Button>
               </DialogTrigger>
 
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Thêm Đội Bóng Mới</DialogTitle>
-                  <DialogDescription>Nhập thông tin đội bóng</DialogDescription>
+                  <DialogTitle>Thêm đội bóng mới</DialogTitle>
+                  <DialogDescription>
+                    Vui lòng nhập thông tin
+                  </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
                   {/* UPLOAD LOGO */}
                   <div>
-                    <Label>Ảnh Đại Diện</Label>
-                    <label className="w-32 h-32 border border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-accent transition">
-                      <UploadCloud className="h-6 w-6 mb-2 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Ảnh Đại Diện</span>
+                    <Label>Logo đội bóng</Label>
 
-                      <input type="file" accept="image/*" onChange={handleFileChangeAdd} className="hidden" />
+                    <label className="w-32 h-32 border border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-accent transition relative overflow-hidden">
+                      {previewAddLogo ? (
+                        <img
+                          src={previewAddLogo}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <>
+                          <UploadCloud className="h-6 w-6 mb-2 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
+                            Chọn ảnh
+                          </span>
+                        </>
+                      )}
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChangeAdd}
+                        className="hidden"
+                      />
                     </label>
-
-                    {newTeam.logo && <p className="text-xs text-green-600 mt-1">{newTeam.logo.name}</p>}
                   </div>
 
                   <div>
-                    <Label>Tên Đội Bóng *</Label>
+                    <Label>Tên đội *</Label>
                     <Input
                       value={newTeam.name}
-                      onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
-                      placeholder="Nhập tên đội bóng"
+                      onChange={(e) =>
+                        setNewTeam({
+                          ...newTeam,
+                          name: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
                   <div>
                     <Label>Sân nhà *</Label>
                     <Input
-                      value={newTeam.city}
-                      onChange={(e) => setNewTeam({ ...newTeam, city: e.target.value })}
-                      placeholder="Nhập sân nhà"
+                      value={newTeam.homeStadium}
+                      onChange={(e) =>
+                        setNewTeam({
+                          ...newTeam,
+                          homeStadium: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
-                  <Button onClick={handleAddTeam} className="w-full">
-                    Thêm Đội Bóng
+                  <Button 
+                    onClick={handleAddTeam} 
+                    className="w-full"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Đang thêm...
+                      </>
+                    ) : (
+                      "Thêm đội bóng"
+                    )}
                   </Button>
                 </div>
               </DialogContent>
@@ -299,12 +425,12 @@ export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
         <CardContent className="space-y-4">
           {/* SEARCH */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm đội bóng..."
+              className="pl-10"
+              placeholder="Tìm kiếm..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
             />
           </div>
 
@@ -313,11 +439,19 @@ export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="text-left p-4 font-semibold">Logo</th>
-                  <th className="text-left p-4 font-semibold">Tên Đội</th>
-                  <th className="text-left p-4 font-semibold">Sân Nhà</th>
-                  <th className="text-left p-4 font-semibold">Số Cầu Thủ</th>
-                  <th className="text-right p-4 font-semibold">Thao Tác</th>
+                  <th className="p-4 text-left font-semibold">Logo</th>
+                  <th className="p-4 text-left font-semibold">
+                    Tên đội
+                  </th>
+                  <th className="p-4 text-left font-semibold">
+                    Sân nhà
+                  </th>
+                  <th className="p-4 text-left font-semibold">
+                    Số cầu thủ
+                  </th>
+                  <th className="p-4 text-right font-semibold">
+                    Thao tác
+                  </th>
                 </tr>
               </thead>
 
@@ -325,29 +459,36 @@ export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
                 {filteredTeams.map((team) => (
                   <tr
                     key={team.id}
-                    className="border-b hover:bg-gray-50 transition-colors cursor-pointer"
                     onClick={() => handleViewDetail(team)}
+                    className="border-b hover:bg-gray-50 transition cursor-pointer"
                   >
-                    {/* LOGO */}
                     <td className="p-4">
-                      {team.logo ? (
-                        <img src={team.logo} className="w-10 h-10 rounded-full object-cover" />
+                      {team.image ? (
+                        <img
+                          src={team.image}
+                          className="w-12 h-12 rounded-full object-cover shadow"
+                        />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">
+                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">
                           ?
                         </div>
                       )}
                     </td>
 
                     <td className="p-4 font-medium">{team.name}</td>
-                    <td className="p-4 text-muted-foreground">{team.city}</td>
-                    <td className="p-4 text-muted-foreground">{team.players.length}</td>
+                    <td className="p-4">{team.homeStadium}</td>
+                    <td className="p-4 text-muted-foreground">
+                      {team.players?.length ?? 0}
+                    </td>
 
-                    {/* ACTIONS */}
                     <td className="p-4 text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <MoreVertical className="h-5 w-5" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -356,19 +497,20 @@ export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              toast.info("Chức năng đăng ký thi đấu chưa được triển khai.");
+                              openEditDialog(team);
                             }}
                           >
-                            🏆 Đăng ký thi đấu
+                             <Pencil className="h-4 w-4 mr-2" /> Chỉnh sửa
                           </DropdownMenuItem>
 
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              openEditDialog(team);
+                              toast.info("Chức năng đang phát triển");
                             }}
                           >
-                            ✏️ Chỉnh sửa
+                            <Trophy className="h-4 w-4 mr-2 " />
+                            Đăng ký thi đấu
                           </DropdownMenuItem>
 
                           <DropdownMenuItem
@@ -379,7 +521,7 @@ export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
                               setShowDeleteDialog(true);
                             }}
                           >
-                            🗑️ Xóa
+                             <Trash2 className="h-4 w-4 mr-2 text-red-600" /> Xóa
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -392,71 +534,122 @@ export default function TeamsModule({ teams, setTeams }: TeamsModuleProps) {
         </CardContent>
       </Card>
 
-      {/* ===================== */}
-      {/* EDIT TEAM POPUP */}
-      {/* ===================== */}
+      {/* EDIT DIALOG */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Chỉnh sửa đội bóng</DialogTitle>
-            <DialogDescription>Cập nhật thông tin đội bóng</DialogDescription>
+            <DialogDescription>Cập nhật thông tin</DialogDescription>
           </DialogHeader>
 
           {editTeam && (
             <div className="space-y-4 py-4">
-              {/* Upload */}
               <div>
                 <Label>Logo</Label>
-                <label className="w-32 h-32 border border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-accent transition">
-                  <UploadCloud className="h-6 w-6 mb-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Chọn ảnh</span>
 
-                  <input type="file" accept="image/*" onChange={handleFileChangeEdit} className="hidden" />
+                <label className="w-32 h-32 border border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-accent overflow-hidden relative">
+                  {(previewEditLogo || editTeam.image) ? (
+                    <img
+                      src={previewEditLogo || editTeam.image!}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <>
+                      <UploadCloud className="h-6 w-6 mb-2 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        Chọn ảnh
+                      </span>
+                    </>
+                  )}
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChangeEdit}
+                    className="hidden"
+                  />
                 </label>
-
-                {editLogo && <p className="text-xs text-green-600 mt-1">{editLogo.name}</p>}
               </div>
 
               <div>
                 <Label>Tên đội *</Label>
                 <Input
                   value={editTeam.name}
-                  onChange={(e) => setEditTeam({ ...editTeam, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditTeam({
+                      ...editTeam,
+                      name: e.target.value,
+                    })
+                  }
                 />
               </div>
 
               <div>
                 <Label>Sân nhà *</Label>
                 <Input
-                  value={editTeam.city}
-                  onChange={(e) => setEditTeam({ ...editTeam, city: e.target.value })}
+                  value={editTeam.homeStadium ?? ""}
+                  onChange={(e) =>
+                    setEditTeam({
+                      ...editTeam,
+                      homeStadium: e.target.value,
+                    })
+                  }
                 />
               </div>
 
-              <Button className="w-full" onClick={handleSaveEdit}>
-                Lưu thay đổi
+              <Button 
+                className="w-full" 
+                onClick={handleSaveEdit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  "Lưu thay đổi"
+                )}
               </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* ===================== */}
-      {/* DELETE CONFIRM POPUP */}
-      {/* ===================== */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      {/* DELETE DIALOG */}
+      <Dialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Xóa đội bóng?</DialogTitle>
-            <DialogDescription>Hành động này không thể hoàn tác.</DialogDescription>
+            <DialogDescription>
+              Hành động này không thể hoàn tác.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="flex justify-end gap-3 mt-6">
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
               Hủy
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Xóa
+
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Đang xóa...
+                </>
+              ) : (
+                "Xóa"
+              )}
             </Button>
           </div>
         </DialogContent>

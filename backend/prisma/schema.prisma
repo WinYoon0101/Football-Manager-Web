@@ -14,106 +14,104 @@ generator client {
 //
 
 model Team {
-  id            Int       @id @default(autoincrement())
-  name          String
-  home_stadium  String?
-  player_count  Int?
+  id           Int       @id @default(autoincrement())
+  name         String
+  homeStadium  String?     
+  playerCount  Int?         
+  image        String?
 
-  // Relations
-  players       Player[]
-  matches_as_team1 Match[] @relation("Team1")
-  matches_as_team2 Match[] @relation("Team2")
-  goals         Goal[]
+  players         Player[]
+  matchesAsTeam1  Match[]   @relation("Team1")
+  matchesAsTeam2  Match[]   @relation("Team2")
+  goals           Goal[]
 
   @@map("teams")
 }
 
 model PlayerType {
-  id             Int      @id @default(autoincrement())
-  name           String
+  id      Int     @id @default(autoincrement())
+  name    String
 
-  players        Player[]
+  players Player[]
 
   @@map("player_types")
 }
 
 model Player {
-  id             Int       @id @default(autoincrement())
-  team_id        Int
-  name           String
-  birth_date     DateTime?
-  player_type_id Int
-  notes          String?
+  id           Int      @id @default(autoincrement())
+  teamId       Int      
+  name         String
+  birthDate    DateTime? 
+  playerTypeId Int      
+  notes        String?
+  image        String?
 
-  // Relations
-  team           Team        @relation(fields: [team_id], references: [id])
-  player_type    PlayerType  @relation(fields: [player_type_id], references: [id])
-  goals          Goal[]
+  team        Team        @relation(fields: [teamId], references: [id])
+  playerType  PlayerType  @relation(fields: [playerTypeId], references: [id])
+  goals       Goal[]
 
   @@map("players")
 }
 
 model Round {
-  id         Int      @id @default(autoincrement())
-  name       String
+  id      Int     @id @default(autoincrement())
+  name    String
 
-  matches    Match[]
+  matches Match[]
 
   @@map("rounds")
 }
 
 model Match {
-  id         Int      @id @default(autoincrement())
-  round_id   Int
-  team1_id   Int
-  team2_id   Int
-  match_time DateTime
-  stadium    String?
+  id        Int      @id @default(autoincrement())
+  roundId   Int     
+  team1Id   Int     
+  team2Id   Int    
+  matchTime DateTime 
+  stadium   String?
 
-  // Relations
-  round     Round @relation(fields: [round_id], references: [id])
-  team1     Team  @relation("Team1", fields: [team1_id], references: [id])
-  team2     Team  @relation("Team2", fields: [team2_id], references: [id])
-  goals     Goal[]
+  round   Round @relation(fields: [roundId], references: [id])
+  team1   Team  @relation("Team1", fields: [team1Id], references: [id])
+  team2   Team  @relation("Team2", fields: [team2Id], references: [id])
+  goals   Goal[]
 
   @@map("matches")
 }
 
 model GoalType {
-  id       Int      @id @default(autoincrement())
-  name     String
+  id    Int     @id @default(autoincrement())
+  name  String
 
-  goals    Goal[]
+  goals Goal[]
 
   @@map("goal_types")
 }
 
 model Goal {
-  id           Int      @id @default(autoincrement())
-  match_id     Int
-  team_id      Int
-  player_id    Int
-  goal_type_id Int
-  minute       Int
+  id         Int @id @default(autoincrement())
+  matchId    Int  
+  teamId     Int 
+  playerId   Int  
+  goalTypeId Int 
+  minute     Int
 
-  // Relations
-  match       Match     @relation(fields: [match_id], references: [id])
-  team        Team      @relation(fields: [team_id], references: [id])
-  player      Player    @relation(fields: [player_id], references: [id])
-  goal_type   GoalType  @relation(fields: [goal_type_id], references: [id])
+  match     Match    @relation(fields: [matchId], references: [id])
+  team      Team     @relation(fields: [teamId], references: [id])
+  player    Player   @relation(fields: [playerId], references: [id])
+  goalType  GoalType @relation(fields: [goalTypeId], references: [id])
 
   @@map("goals")
 }
 
 model Parameter {
-  id                   Int @id @default(autoincrement())
-  min_age              Int?
-  max_age              Int?
-  min_players          Int?
-  max_players          Int?
-  max_foreign_players  Int?
-  min_goal_minute      Int?
-  max_goal_minute      Int?
+  id                Int @id @default(autoincrement())
+  minAge            Int? 
+  maxAge            Int? 
+  minPlayers        Int? 
+  maxPlayers        Int? 
+  maxForeignPlayers Int? 
+  minGoalMinute     Int? 
+  maxGoalMinute     Int? 
 
   @@map("parameters")
 }
