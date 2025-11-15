@@ -19,11 +19,11 @@ import {
   Search,
   UploadCloud,
   ArrowLeft,
-  MoreVertical,
   Trophy,
   Pencil,
   Trash2,
   Loader2,
+  Ellipsis,
 } from "lucide-react";
 
 import {
@@ -44,9 +44,8 @@ import {
 
 import type { Team } from "@/lib/types";
 import { toast } from "react-toastify";
+
 import { teamsAPI } from "@/lib/api/teams";
-
-
 
 export default function TeamsModule() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,14 +64,12 @@ export default function TeamsModule() {
         setTeams(data);
       } catch (error) {
         toast.error("Không thể tải danh sách đội bóng");
-        console.error("Error fetching teams:", error);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchTeams();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ADD TEAM
@@ -115,13 +112,13 @@ export default function TeamsModule() {
   };
 
   // SEARCH
-  const filteredTeams = teams.filter(
-    (t) =>
-      t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (t.homeStadium ?? "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
+  const filteredTeams = teams.filter((t) => {
+    const name = t.name?.toLowerCase() ?? "";
+    const stadium = t.homeStadium?.toLowerCase() ?? "";
+    const search = searchTerm.toLowerCase();
+
+    return name.includes(search) || stadium.includes(search);
+  });
 
   // DELETE
   const confirmDelete = async () => {
@@ -129,8 +126,11 @@ export default function TeamsModule() {
 
     try {
       setIsSubmitting(true);
+
       await teamsAPI.delete(deleteTeamId);
+
       setTeams(teams.filter((t) => t.id !== deleteTeamId));
+
       toast.success("Đã xóa đội bóng!");
       setShowDeleteDialog(false);
       setDeleteTeamId(null);
@@ -156,13 +156,19 @@ export default function TeamsModule() {
 
     try {
       setIsSubmitting(true);
+
+      const formData = new FormData();
+      formData.append("name", newTeam.name);
+      formData.append("homeStadium", newTeam.homeStadium);
+      if (newTeam.image) formData.append("image", newTeam.image);
+
       const createdTeam = await teamsAPI.create({
         name: newTeam.name,
         homeStadium: newTeam.homeStadium,
-        logo: newTeam.image || undefined,
+        logo: newTeam.image ?? undefined,
       });
-
       setTeams([...teams, createdTeam]);
+
       toast.success("Thêm đội bóng thành công!");
 
       setNewTeam({ name: "", homeStadium: "", image: null });
@@ -188,22 +194,25 @@ export default function TeamsModule() {
 
     try {
       setIsSubmitting(true);
+
+      const formData = new FormData();
+      formData.append("name", editTeam.name);
+      formData.append("homeStadium", editTeam.homeStadium ?? "");
+      if (editLogo) formData.append("image", editLogo);
+
       const updatedTeam = await teamsAPI.update(editTeam.id, {
         name: editTeam.name,
-        homeStadium: editTeam.homeStadium ?? undefined,
-        logo: editLogo || undefined,
+        homeStadium: editTeam.homeStadium ?? "",
+        logo: editLogo ?? undefined,
       });
 
-      const updated = teams.map((t) =>
-        t.id === editTeam.id ? updatedTeam : t
-      );
+      setTeams(teams.map((t) => (t.id === editTeam.id ? updatedTeam : t)));
 
-      setTeams(updated);
       toast.success("Cập nhật thành công!");
-
       setShowEditDialog(false);
-      setEditLogo(null);
+
       setPreviewEditLogo(null);
+      setEditLogo(null);
     } catch (error: any) {
       toast.error(error.message || "Không thể cập nhật đội bóng");
     } finally {
@@ -220,9 +229,7 @@ export default function TeamsModule() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-2xl font-bold">{selectedTeam.name}</h3>
-            <p className="text-muted-foreground">
-              {selectedTeam.homeStadium}
-            </p>
+            <p className="text-muted-foreground">{selectedTeam.homeStadium}</p>
           </div>
 
           <Button
@@ -236,22 +243,34 @@ export default function TeamsModule() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card thông tin đội */}
           <Card>
             <CardHeader>
               <CardTitle>Thông Tin Đội</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+
+            <CardContent className="space-y-4">
+              {/* Logo đội bóng */}
+              <div className="flex items-center justify-center">
+                {selectedTeam.image ? (
+                  <img
+                    src={selectedTeam.image}
+                    className="w-26 h-26 rounded-lg object-cover shadow-sm border"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-lg border flex items-center justify-center text-muted-foreground">
+                    Không có logo
+                  </div>
+                )}
+              </div>
+
               <div>
-                <span className="text-sm text-muted-foreground">
-                  Tên đội:
-                </span>
+                <span className="text-sm text-muted-foreground">Tên đội:</span>
                 <p className="font-semibold">{selectedTeam.name}</p>
               </div>
 
               <div>
-                <span className="text-sm text-muted-foreground">
-                  Sân nhà:
-                </span>
+                <span className="text-sm text-muted-foreground">Sân nhà:</span>
                 <p className="font-semibold">{selectedTeam.homeStadium}</p>
               </div>
 
@@ -266,6 +285,7 @@ export default function TeamsModule() {
             </CardContent>
           </Card>
 
+          {/* Card danh sách cầu thủ */}
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>Danh sách cầu thủ</CardTitle>
@@ -284,12 +304,13 @@ export default function TeamsModule() {
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                     >
                       <div className="flex items-center gap-3">
-                        
+                        {/* Avatar player nếu sau này muốn thêm */}
+                        {/* <img src={p.avatar} className="w-10 h-10 rounded-full object-cover" /> */}
 
                         <div>
                           <p className="font-semibold">{p.name}</p>
                           <p className="text-xs text-muted-foreground">
-                           {p.playerTypeId === 1 ? "Trong nước" : "Nước ngoài"}
+                            {p.playerTypeId === 1 ? "Trong nước" : "Nước ngoài"}
                           </p>
                         </div>
                       </div>
@@ -307,7 +328,7 @@ export default function TeamsModule() {
   // ---------------------------------------
   // LIST VIEW
   // ---------------------------------------
-  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -323,15 +344,10 @@ export default function TeamsModule() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Danh Sách Đội Bóng</CardTitle>
-              <CardDescription>
-                Quản lý các đội tham gia giải
-              </CardDescription>
+              <CardDescription>Quản lý các đội tham gia giải</CardDescription>
             </div>
 
-            <Dialog
-              open={showAddDialog}
-              onOpenChange={setShowAddDialog}
-            >
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
@@ -342,9 +358,7 @@ export default function TeamsModule() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Thêm đội bóng mới</DialogTitle>
-                  <DialogDescription>
-                    Vui lòng nhập thông tin
-                  </DialogDescription>
+                  <DialogDescription>Vui lòng nhập thông tin</DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
@@ -352,28 +366,43 @@ export default function TeamsModule() {
                   <div>
                     <Label>Logo đội bóng</Label>
 
-                    <label className="w-32 h-32 border border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-accent transition relative overflow-hidden">
-                      {previewAddLogo ? (
-                        <img
-                          src={previewAddLogo}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <>
-                          <UploadCloud className="h-6 w-6 mb-2 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            Chọn ảnh
-                          </span>
-                        </>
-                      )}
+                    <div className="flex flex-col items-center">
+                      <label
+                        className="
+      w-32 h-32 
+      border border-dashed border-gray-300 
+      rounded-xl 
+      flex flex-col items-center justify-center 
+      cursor-pointer 
+      bg-white
+      hover:border-blue-500 hover:bg-blue-50
+      transition-all duration-200
+      text-center
+      group
+    "
+                      >
+                        {previewAddLogo ? (
+                          <img
+                            src={previewAddLogo}
+                            className="w-full h-full rounded-xl object-cover"
+                          />
+                        ) : (
+                          <>
+                            <UploadCloud className="h-7 w-7 text-gray-400 group-hover:text-blue-500 transition mb-1" />
+                            <span className="text-sm text-gray-500 group-hover:text-blue-600">
+                              Chọn ảnh
+                            </span>
+                          </>
+                        )}
 
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChangeAdd}
-                        className="hidden"
-                      />
-                    </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChangeAdd}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   <div>
@@ -402,8 +431,8 @@ export default function TeamsModule() {
                     />
                   </div>
 
-                  <Button 
-                    onClick={handleAddTeam} 
+                  <Button
+                    onClick={handleAddTeam}
                     className="w-full"
                     disabled={isSubmitting}
                   >
@@ -436,20 +465,20 @@ export default function TeamsModule() {
 
           {/* TABLE */}
           <div className="border rounded-lg overflow-hidden">
-            <table className="w-full">
+            <table className="w-full table-fixed">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="p-4 text-left font-semibold">Logo</th>
-                  <th className="p-4 text-left font-semibold">
+                  <th className="p-4 text-left font-semibold w-[90px]">Logo</th>
+                  <th className="p-4 text-left font-semibold w-[200px]">
                     Tên đội
                   </th>
-                  <th className="p-4 text-left font-semibold">
+                  <th className="p-4 text-left font-semibold w-[180px]">
                     Sân nhà
                   </th>
-                  <th className="p-4 text-left font-semibold">
+                  <th className="p-4 text-left font-semibold w-[120px]">
                     Số cầu thủ
                   </th>
-                  <th className="p-4 text-right font-semibold">
+                  <th className="p-4 text-right font-semibold w-[80px]">
                     Thao tác
                   </th>
                 </tr>
@@ -466,7 +495,7 @@ export default function TeamsModule() {
                       {team.image ? (
                         <img
                           src={team.image}
-                          className="w-12 h-12 rounded-full object-cover shadow"
+                          className="w-12 h-12 rounded-full object-cover shadow shrink-0"
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">
@@ -475,9 +504,15 @@ export default function TeamsModule() {
                       )}
                     </td>
 
-                    <td className="p-4 font-medium">{team.name}</td>
-                    <td className="p-4">{team.homeStadium}</td>
-                    <td className="p-4 text-muted-foreground">
+                    <td className="p-4 font-medium whitespace-nowrap">
+                      {team.name}
+                    </td>
+
+                    <td className="p-4 whitespace-nowrap">
+                      {team.homeStadium}
+                    </td>
+
+                    <td className="p-4 text-muted-foreground whitespace-nowrap">
                       {team.players?.length ?? 0}
                     </td>
 
@@ -488,8 +523,9 @@ export default function TeamsModule() {
                             size="icon"
                             variant="ghost"
                             onClick={(e) => e.stopPropagation()}
+                            className="mr-4"
                           >
-                            <MoreVertical className="h-5 w-5" />
+                            <Ellipsis className="h-10 w-10 " />
                           </Button>
                         </DropdownMenuTrigger>
 
@@ -500,17 +536,7 @@ export default function TeamsModule() {
                               openEditDialog(team);
                             }}
                           >
-                             <Pencil className="h-4 w-4 mr-2" /> Chỉnh sửa
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toast.info("Chức năng đang phát triển");
-                            }}
-                          >
-                            <Trophy className="h-4 w-4 mr-2 " />
-                            Đăng ký thi đấu
+                            <Pencil className="h-4 w-4 mr-2" /> Chỉnh sửa
                           </DropdownMenuItem>
 
                           <DropdownMenuItem
@@ -521,7 +547,7 @@ export default function TeamsModule() {
                               setShowDeleteDialog(true);
                             }}
                           >
-                             <Trash2 className="h-4 w-4 mr-2 text-red-600" /> Xóa
+                            <Trash2 className="h-4 w-4 mr-2 text-red-600" /> Xóa
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -536,27 +562,42 @@ export default function TeamsModule() {
 
       {/* EDIT DIALOG */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa đội bóng</DialogTitle>
             <DialogDescription>Cập nhật thông tin</DialogDescription>
           </DialogHeader>
 
           {editTeam && (
-            <div className="space-y-4 py-4">
-              <div>
-                <Label>Logo</Label>
+            <div className="space-y-5 py-2">
+              {/* Upload Logo */}
+              <div className="flex flex-col items-center">
+                <Label className="mb-2 font-medium">Logo</Label>
 
-                <label className="w-32 h-32 border border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-accent overflow-hidden relative">
-                  {(previewEditLogo || editTeam.image) ? (
+                <label
+                  className="
+              w-32 h-32
+              border border-dashed border-gray-300
+              rounded-xl
+              flex flex-col items-center justify-center
+              cursor-pointer
+              bg-white
+              hover:border-blue-500 hover:bg-blue-50
+              transition-all duration-200
+              overflow-hidden
+              relative
+              group
+            "
+                >
+                  {previewEditLogo || editTeam.image ? (
                     <img
                       src={previewEditLogo || editTeam.image!}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full h-full object-cover rounded-xl"
                     />
                   ) : (
                     <>
-                      <UploadCloud className="h-6 w-6 mb-2 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
+                      <UploadCloud className="h-7 w-7 mb-1 text-gray-400 group-hover:text-blue-500 transition" />
+                      <span className="text-sm text-gray-500 group-hover:text-blue-600">
                         Chọn ảnh
                       </span>
                     </>
@@ -571,8 +612,9 @@ export default function TeamsModule() {
                 </label>
               </div>
 
+              {/* Tên đội */}
               <div>
-                <Label>Tên đội *</Label>
+                <Label className="font-medium">Tên đội *</Label>
                 <Input
                   value={editTeam.name}
                   onChange={(e) =>
@@ -584,8 +626,9 @@ export default function TeamsModule() {
                 />
               </div>
 
+              {/* Sân nhà */}
               <div>
-                <Label>Sân nhà *</Label>
+                <Label className="font-medium">Sân nhà *</Label>
                 <Input
                   value={editTeam.homeStadium ?? ""}
                   onChange={(e) =>
@@ -597,8 +640,9 @@ export default function TeamsModule() {
                 />
               </div>
 
-              <Button 
-                className="w-full" 
+              {/* Nút lưu */}
+              <Button
+                className="w-full h-11 text-base rounded-xl"
                 onClick={handleSaveEdit}
                 disabled={isSubmitting}
               >
@@ -617,10 +661,7 @@ export default function TeamsModule() {
       </Dialog>
 
       {/* DELETE DIALOG */}
-      <Dialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-      >
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Xóa đội bóng?</DialogTitle>
@@ -637,8 +678,8 @@ export default function TeamsModule() {
               Hủy
             </Button>
 
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={confirmDelete}
               disabled={isSubmitting}
             >
