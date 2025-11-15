@@ -23,7 +23,7 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  Ellipsis,
+  MoreVertical,
 } from "lucide-react";
 
 import {
@@ -468,7 +468,7 @@ export default function TeamsModule() {
             <table className="w-full table-fixed">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="p-4 text-left font-semibold w-[90px]">Logo</th>
+                  <th className="p-4 text-left font-semibold w-[90px]"></th>
                   <th className="p-4 text-left font-semibold w-[200px]">
                     Tên đội
                   </th>
@@ -479,7 +479,7 @@ export default function TeamsModule() {
                     Số cầu thủ
                   </th>
                   <th className="p-4 text-right font-semibold w-[80px]">
-                    Thao tác
+                   
                   </th>
                 </tr>
               </thead>
@@ -525,7 +525,7 @@ export default function TeamsModule() {
                             onClick={(e) => e.stopPropagation()}
                             className="mr-4"
                           >
-                            <Ellipsis className="h-10 w-10 " />
+                            <MoreVertical className="h-10 w-10 " />
                           </Button>
                         </DropdownMenuTrigger>
 

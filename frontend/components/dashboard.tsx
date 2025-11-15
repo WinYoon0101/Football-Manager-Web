@@ -79,28 +79,7 @@ export default function Dashboard() {
 
       {/* Right Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-border px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="icon"
-              className="md:hidden bg-transparent"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-
-            <div>
-              <h2 className="text-xl font-bold text-foreground">
-                {navItems.find((i) => i.id === activeTab)?.label}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Quản lý giải vô địch bóng đá quốc gia
-              </p>
-            </div>
-          </div>
-        </header>
-
+       
         <main className="flex-1 overflow-y-auto p-6">
           {activeTab === "overview" && <OverviewModule />}
           {activeTab === "teams" && <TeamsModule />}
