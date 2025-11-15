@@ -1,0 +1,119 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+//
+// ===========================
+//         MODELS
+// ===========================
+//
+
+model Team {
+  id            Int       @id @default(autoincrement())
+  name          String
+  home_stadium  String?
+  player_count  Int?
+
+  // Relations
+  players       Player[]
+  matches_as_team1 Match[] @relation("Team1")
+  matches_as_team2 Match[] @relation("Team2")
+  goals         Goal[]
+
+  @@map("teams")
+}
+
+model PlayerType {
+  id             Int      @id @default(autoincrement())
+  name           String
+
+  players        Player[]
+
+  @@map("player_types")
+}
+
+model Player {
+  id             Int       @id @default(autoincrement())
+  team_id        Int
+  name           String
+  birth_date     DateTime?
+  player_type_id Int
+  notes          String?
+
+  // Relations
+  team           Team        @relation(fields: [team_id], references: [id])
+  player_type    PlayerType  @relation(fields: [player_type_id], references: [id])
+  goals          Goal[]
+
+  @@map("players")
+}
+
+model Round {
+  id         Int      @id @default(autoincrement())
+  name       String
+
+  matches    Match[]
+
+  @@map("rounds")
+}
+
+model Match {
+  id         Int      @id @default(autoincrement())
+  round_id   Int
+  team1_id   Int
+  team2_id   Int
+  match_time DateTime
+  stadium    String?
+
+  // Relations
+  round     Round @relation(fields: [round_id], references: [id])
+  team1     Team  @relation("Team1", fields: [team1_id], references: [id])
+  team2     Team  @relation("Team2", fields: [team2_id], references: [id])
+  goals     Goal[]
+
+  @@map("matches")
+}
+
+model GoalType {
+  id       Int      @id @default(autoincrement())
+  name     String
+
+  goals    Goal[]
+
+  @@map("goal_types")
+}
+
+model Goal {
+  id           Int      @id @default(autoincrement())
+  match_id     Int
+  team_id      Int
+  player_id    Int
+  goal_type_id Int
+  minute       Int
+
+  // Relations
+  match       Match     @relation(fields: [match_id], references: [id])
+  team        Team      @relation(fields: [team_id], references: [id])
+  player      Player    @relation(fields: [player_id], references: [id])
+  goal_type   GoalType  @relation(fields: [goal_type_id], references: [id])
+
+  @@map("goals")
+}
+
+model Parameter {
+  id                   Int @id @default(autoincrement())
+  min_age              Int?
+  max_age              Int?
+  min_players          Int?
+  max_players          Int?
+  max_foreign_players  Int?
+  min_goal_minute      Int?
+  max_goal_minute      Int?
+
+  @@map("parameters")
+}

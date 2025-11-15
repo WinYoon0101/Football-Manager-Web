@@ -45,7 +45,7 @@ export default function PlayersModule({ teams, setTeams }: PlayersModuleProps) {
   )
 
   const openDialog = (player: Player & { teamName: string; teamId: string }, mode: "view" | "edit") => {
-    setSelectedPlayer(player as Player)
+    setSelectedPlayer(player)
     setEditForm(player)
     setDialogMode(mode)
     setIsDialogOpen(true)
@@ -94,7 +94,8 @@ export default function PlayersModule({ teams, setTeams }: PlayersModuleProps) {
         yellowCards: editForm.yellowCards || 0,
         redCards: editForm.redCards || 0,
         type: editForm.type || "domestic",
-        image: imagePreview,
+        image: imagePreview ?? undefined,
+        jerseyNumber: 0
       }
 
       setTeams(

@@ -35,6 +35,8 @@ export interface Player {
   bio?: string
   matchHistory?: MatchHistory[]
   number?: number // Alias for jerseyNumber
+  image?: string // Alias for avatar
+  birthDate?: string // Added birth date field
 }
 
 export interface MatchHistory {
@@ -68,6 +70,7 @@ export interface Foul {
 }
 
 export interface Team {
+  logo: any
   id: string
   name: string
   city: string

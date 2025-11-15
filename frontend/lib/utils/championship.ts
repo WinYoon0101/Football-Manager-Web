@@ -17,6 +17,7 @@ export function generateSchedule(teams: Team[], rounds = 2): Match[] {
             awayScore: 0,
             goals: [],
             status: "scheduled",
+            date: ""
           })
         } else {
           matches.push({
@@ -28,6 +29,7 @@ export function generateSchedule(teams: Team[], rounds = 2): Match[] {
             awayScore: 0,
             goals: [],
             status: "scheduled",
+            date: ""
           })
         }
       }
@@ -60,19 +62,23 @@ export function calculateStandings(teams: Team[], matches: Match[], regulation: 
       const home = standings[match.homeTeamId]
       const away = standings[match.awayTeamId]
 
+      // coalesce possibly undefined scores to 0
+      const homeScore = match.homeScore ?? 0
+      const awayScore = match.awayScore ?? 0
+
       home.played++
       away.played++
-      home.goalsFor += match.homeScore
-      home.goalsAgainst += match.awayScore
-      away.goalsFor += match.awayScore
-      away.goalsAgainst += match.homeScore
+      home.goalsFor += homeScore
+      home.goalsAgainst += awayScore
+      away.goalsFor += awayScore
+      away.goalsAgainst += homeScore
 
-      if (match.homeScore > match.awayScore) {
+      if (homeScore > awayScore) {
         home.wins++
         home.points += regulation.winPoints
         away.losses++
         away.points += regulation.lossPoints
-      } else if (match.awayScore > match.homeScore) {
+      } else if (awayScore > homeScore) {
         away.wins++
         away.points += regulation.winPoints
         home.losses++

@@ -1,8 +1,12 @@
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
-import { Analytics } from "@vercel/analytics/next"
+
 import "./globals.css"
+
+
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 export const metadata: Metadata = {
   title: "Football",
@@ -25,7 +29,20 @@ export default function RootLayout({
     >
       <body className="font-sans">
         {children}
-        <Analytics />
+
+        {/*  Toast toàn cục – style mặc định */}
+        <ToastContainer
+          position="bottom-right"
+          autoClose={2500}
+          newestOnTop={false}
+          closeOnClick
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+
+     
       </body>
     </html>
   )

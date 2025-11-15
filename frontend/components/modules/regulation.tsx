@@ -37,7 +37,7 @@ export default function RegulationModule({ regulation, setRegulation }: Regulati
   }
 
   const handleSaveReg3 = () => {
-    if (reg3.maxScoringTime < 0) {
+    if (reg3.matchDuration < 0) {
       alert("Thời gian ghi bàn không thể âm")
       return
     }
@@ -177,11 +177,11 @@ export default function RegulationModule({ regulation, setRegulation }: Regulati
               <label className="text-sm font-medium text-foreground">Thời Gian Ghi Bàn Tối Đa (phút)</label>
               <Input
                 type="number"
-                value={reg3.maxScoringTime}
-                onChange={(e) => setReg3({ ...reg3, maxScoringTime: Number.parseInt(e.target.value) })}
+                value={reg3.matchDuration}
+                onChange={(e) => setReg3({ ...reg3, matchDuration: Number.parseInt(e.target.value) })}
               />
               <p className="text-xs text-muted-foreground mt-2">
-                Hiện tại có {reg3.goalTypes.length} loại bàn thắng: {reg3.goalTypes.join(", ")}
+                Hiện tại có {reg3.goalTypes} loại bàn thắng
               </p>
             </div>
             <div className="p-3 bg-muted rounded">
