@@ -42,7 +42,8 @@ export default function EditPlayerDialog({
   const [birthDate, setBirthDate] = useState("");
   const [team, setTeam] = useState("");
   const [playerType, setPlayerType] = useState("");
-  const [image, setImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -52,10 +53,11 @@ export default function EditPlayerDialog({
   useEffect(() => {
     if (player) {
       setName(player.name || "");
-      setBirthDate(player.birthDate?.slice(0, 10) || "");
+      setBirthDate(player.birthDate ? new Date(player.birthDate).toISOString().split('T')[0] : "");
       setTeam(player.team?.name || "");
       setPlayerType(player.playerType?.name || "");
-      setImage(player.image || null);
+      setImagePreview(player.image || null);
+      setImageFile(null); // Reset file khi load lại
     }
   }, [player, open]);
 
@@ -63,8 +65,9 @@ export default function EditPlayerDialog({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setImageFile(file);
     const reader = new FileReader();
-    reader.onload = () => setImage(reader.result as string);
+    reader.onload = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
   };
 
@@ -74,13 +77,16 @@ export default function EditPlayerDialog({
       return;
     }
 
+    // Nếu có file mới thì gửi file, nếu không thì gửi URL cũ
+    const imageToSend = imageFile || imagePreview;
+
     onSubmit({
       id: player.id,
       name,
       birthDate,
       team,
       playerType,
-      image,
+      image: imageToSend,
     });
 
     onOpenChange(false);
@@ -100,8 +106,8 @@ export default function EditPlayerDialog({
               className="relative w-28 h-28 rounded-full bg-muted overflow-hidden group cursor-pointer shadow-md"
               onClick={() => fileInputRef.current?.click()}
             >
-              {image ? (
-                <img src={image} className="w-full h-full object-cover" />
+              {imagePreview ? (
+                <img src={imagePreview} className="w-full h-full object-cover" />
               ) : (
                 <div className="flex items-center justify-center w-full h-full text-muted-foreground">
                   <Camera className="w-7 h-7 opacity-60" />

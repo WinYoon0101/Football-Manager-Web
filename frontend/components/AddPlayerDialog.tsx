@@ -34,15 +34,17 @@ export default function AddPlayerDialog({
   const [team, setTeam] = useState("");
   const [playerType, setPlayerType] = useState("");
 
-  const [image, setImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setImageFile(file);
     const reader = new FileReader();
-    reader.onload = () => setImage(reader.result as string);
+    reader.onload = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
   };
 
@@ -52,13 +54,14 @@ export default function AddPlayerDialog({
       return;
     }
 
-    onSubmit({ name, birthDate, team, playerType, image });
+    onSubmit({ name, birthDate, team, playerType, image: imageFile });
 
     setName("");
     setBirthDate("");
     setTeam("");
     setPlayerType("");
-    setImage(null);
+    setImagePreview(null);
+    setImageFile(null);
 
     onOpenChange(false);
   };
@@ -78,8 +81,8 @@ export default function AddPlayerDialog({
               className="relative w-28 h-28 rounded-full bg-muted overflow-hidden group cursor-pointer shadow-md"
               onClick={() => fileInputRef.current?.click()}
             >
-              {image ? (
-                <img src={image} className="w-full h-full object-cover" />
+              {imagePreview ? (
+                <img src={imagePreview} className="w-full h-full object-cover" />
               ) : (
                 <div className="flex items-center justify-center w-full h-full text-muted-foreground">
                   <Camera className="w-7 h-7 opacity-60" />
