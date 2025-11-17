@@ -1,7 +1,5 @@
 // Championship Management System Types
 
-
-
 export interface Team {
   id: number;
   name: string;
@@ -22,8 +20,6 @@ export interface PlayerType {
 
   players?: Player[];
 }
-
-
 
 export interface Player {
   id: number;
@@ -69,7 +65,6 @@ export interface GoalType {
   goals?: Goal[];
 }
 
-
 export interface Goal {
   id: number;
   matchId: number;
@@ -95,3 +90,62 @@ export interface Parameter {
   maxGoalMinute?: number | null;
 }
 
+// Additional types for Match Results
+export interface MatchResult {
+  matchId: number;
+  match: {
+    id: number;
+    matchTime: Date | string;
+    stadium: string | null;
+    round: {
+      id: number;
+      name: string;
+    };
+    team1: {
+      id: number;
+      name: string;
+      image: string | null;
+    };
+    team2: {
+      id: number;
+      name: string;
+      image: string | null;
+    };
+  };
+  team1Goals: number;
+  team2Goals: number;
+  winner: "team1" | "team2" | "draw";
+  goals: Array<{
+    id: number;
+    minute: number;
+    team: {
+      id: number;
+      name: string;
+    };
+    player: {
+      id: number;
+      name: string;
+      image: string | null;
+    };
+    goalType: {
+      id: number;
+      name: string;
+    };
+  }>;
+}
+
+export interface StandingTeam {
+  team: {
+    id: number;
+    name: string;
+    image: string | null;
+  };
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}
