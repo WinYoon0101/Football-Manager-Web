@@ -24,6 +24,8 @@ model Team {
   matchesAsTeam1  Match[]   @relation("Team1")
   matchesAsTeam2  Match[]   @relation("Team2")
   goals           Goal[]
+  applications Application[]
+  rankings Ranking[]
 
   @@map("teams")
 }
@@ -69,6 +71,7 @@ model Match {
   team2Id   Int    
   matchTime DateTime 
   stadium   String?
+  status    String?
 
   round   Round @relation(fields: [roundId], references: [id])
   team1   Team  @relation("Team1", fields: [team1Id], references: [id])
@@ -112,6 +115,55 @@ model Parameter {
   maxForeignPlayers Int? 
   minGoalMinute     Int? 
   maxGoalMinute     Int? 
+  
+  winScore        Int      @default(3)
+  drawScore        Int      @default(1)
+  loseScore         Int      @default(0)
+
+   // Sắp xếp theo thứ tự trong mảng
+   categorySort      String[] @default(["điểm", "hiệu_số", "bàn_thắng"])
 
   @@map("parameters")
+}
+
+
+model Season {
+  id        Int      @id @default(autoincrement())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+
+  rankings     Ranking[]
+  applications Application[]
+
+  @@map("season")
+}
+
+model Application {
+  id        Int      @id @default(autoincrement())
+  seasonId  Int
+  teamId    Int
+  dateSignin DateTime @default(now())
+  status    String?
+
+  season Season @relation(fields: [seasonId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+
+  @@map("application")
+}
+
+model Ranking {
+  id             Int @id @default(autoincrement())
+  teamId         Int
+  seasonId       Int
+  win            Int @default(0)
+  lose           Int @default(0)
+  draw           Int @default(0)
+  points         Int @default(0)
+  goalDifference Int @default(0)
+
+  team   Team   @relation(fields: [teamId], references: [id])
+  season Season @relation(fields: [seasonId], references: [id])
+
+  @@map("ranking")
 }
