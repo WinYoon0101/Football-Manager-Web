@@ -2,6 +2,7 @@
 
 import { Request, Response } from "express";
 import MatchService from "../services/match.service";
+import SeasonService from "../services/season.service";
 
 class MatchController {
   // Lấy tất cả matches
@@ -285,7 +286,36 @@ class MatchController {
   // Lấy kết quả tất cả trận đấu
   async getAllResults(req: Request, res: Response) {
     try {
-      const data = await MatchService.getAllResults();
+      const seasonName = req.query.season
+        ? String(req.query.season)
+        : undefined;
+
+      let seasonId: number | undefined;
+      const seasonIdParam = req.query.seasonId;
+      if (seasonIdParam !== undefined) {
+        const seasonIdValue = Array.isArray(seasonIdParam)
+          ? seasonIdParam[0]
+          : seasonIdParam;
+        const parsedSeasonId = Number(seasonIdValue);
+
+        if (isNaN(parsedSeasonId) || parsedSeasonId <= 0) {
+          return res
+            .status(400)
+            .json({ message: "ID mùa giải không hợp lệ" });
+        }
+
+        const season = await SeasonService.getById(parsedSeasonId);
+        if (!season) {
+          return res.status(404).json({ message: "Không tìm thấy mùa giải" });
+        }
+
+        seasonId = parsedSeasonId;
+      }
+
+      const data = await MatchService.getAllResults({
+        seasonName,
+        seasonId,
+      });
       res.json(data);
     } catch (err: any) {
       console.error("Get all results error:", err);
@@ -372,7 +402,36 @@ class MatchController {
   // Lấy bảng xếp hạng
   async getStandings(req: Request, res: Response) {
     try {
-      const data = await MatchService.getStandings();
+      const seasonName = req.query.season
+        ? String(req.query.season)
+        : undefined;
+
+      let seasonId: number | undefined;
+      const seasonIdParam = req.query.seasonId;
+      if (seasonIdParam !== undefined) {
+        const seasonIdValue = Array.isArray(seasonIdParam)
+          ? seasonIdParam[0]
+          : seasonIdParam;
+        const parsedSeasonId = Number(seasonIdValue);
+
+        if (isNaN(parsedSeasonId) || parsedSeasonId <= 0) {
+          return res
+            .status(400)
+            .json({ message: "ID mùa giải không hợp lệ" });
+        }
+
+        const season = await SeasonService.getById(parsedSeasonId);
+        if (!season) {
+          return res.status(404).json({ message: "Không tìm thấy mùa giải" });
+        }
+
+        seasonId = parsedSeasonId;
+      }
+
+      const data = await MatchService.getStandings({
+        seasonName,
+        seasonId,
+      });
       res.json(data);
     } catch (err: any) {
       console.error("Get standings error:", err);
