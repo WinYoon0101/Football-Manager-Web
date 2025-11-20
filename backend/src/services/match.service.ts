@@ -61,6 +61,37 @@ interface StandingTeam {
 }
 
 class MatchService {
+  private buildSeasonFilter(seasonName?: string) {
+    if (!seasonName) return undefined;
+
+    return {
+      round: {
+        name: {
+          contains: seasonName,
+          mode: "insensitive" as const,
+        },
+      },
+    };
+  }
+
+  private async getSeasonTeamIds(
+    seasonId?: number
+  ): Promise<number[] | undefined> {
+    if (!seasonId) return undefined;
+
+    const rankings = await prisma.ranking.findMany({
+      where: { seasonId },
+      select: { teamId: true },
+    });
+
+    if (rankings.length === 0) {
+      return [];
+    }
+
+    const uniqueIds = Array.from(new Set(rankings.map((entry) => entry.teamId)));
+    return uniqueIds;
+  }
+
   // Lấy tất cả matches
   async getAll() {
     return prisma.match.findMany({
@@ -161,8 +192,27 @@ class MatchService {
   // ===== RESULT METHODS =====
 
   // Lấy kết quả tất cả trận đấu
-  async getAllResults() {
+  async getAllResults(options: {
+    seasonName?: string;
+    seasonId?: number;
+  } = {}) {
+    const { seasonName, seasonId } = options;
+
+    const seasonFilter = this.buildSeasonFilter(seasonName);
+    const seasonTeamIds = await this.getSeasonTeamIds(seasonId);
+
+    if (seasonId && (!seasonTeamIds || seasonTeamIds.length === 0)) {
+      return [];
+    }
+
     const matches = await prisma.match.findMany({
+      where:
+        seasonTeamIds && seasonTeamIds.length > 0
+          ? {
+              team1Id: { in: seasonTeamIds },
+              team2Id: { in: seasonTeamIds },
+            }
+          : seasonFilter,
       include: {
         round: true,
         team1: true,
@@ -295,17 +345,52 @@ class MatchService {
   }
 
   // Lấy bảng xếp hạng
-  async getStandings(): Promise<StandingTeam[]> {
+  async getStandings(options: {
+    seasonName?: string;
+    seasonId?: number;
+  } = {}): Promise<StandingTeam[]> {
+    const { seasonName, seasonId } = options;
+    const seasonFilter = this.buildSeasonFilter(seasonName);
+    const seasonTeamIds = await this.getSeasonTeamIds(seasonId);
+
+    if (seasonId && (!seasonTeamIds || seasonTeamIds.length === 0)) {
+      return [];
+    }
+
+    const matchesAsTeam1Where =
+      seasonTeamIds && seasonTeamIds.length > 0
+        ? {
+            team2Id: { in: seasonTeamIds },
+          }
+        : seasonFilter;
+
+    const matchesAsTeam2Where =
+      seasonTeamIds && seasonTeamIds.length > 0
+        ? {
+            team1Id: { in: seasonTeamIds },
+          }
+        : seasonFilter;
+
     const teams = await prisma.team.findMany({
+      where:
+        seasonTeamIds && seasonTeamIds.length > 0
+          ? {
+              id: { in: seasonTeamIds },
+            }
+          : undefined,
       include: {
         matchesAsTeam1: {
+          where: matchesAsTeam1Where,
           include: {
             goals: true,
+            round: true,
           },
         },
         matchesAsTeam2: {
+          where: matchesAsTeam2Where,
           include: {
             goals: true,
+            round: true,
           },
         },
       },
