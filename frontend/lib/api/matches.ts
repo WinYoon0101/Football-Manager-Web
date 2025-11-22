@@ -75,6 +75,7 @@ export const matchApi = {
     team2Id: number;
     matchTime: string;
     stadium?: string;
+    seasonId: number;
   }) => api.post<Match>("/matches", data),
 
   // Cập nhật trận đấu
@@ -99,11 +100,27 @@ export const matchApi = {
 // Result API (now handled by match routes)
 export const resultApi = {
   // Lấy kết quả tất cả trận đấu
-  getAll: () => api.get<MatchResult[]>("/matches/results"),
+  getAll: (seasonId?: number) => {
+    const params =
+      seasonId !== undefined
+        ? {
+            seasonId,
+          }
+        : {};
+    return api.get<MatchResult[]>("/matches/results", { params });
+  },
 
   // Lấy kết quả trận đấu theo ID
   getById: (matchId: number) =>
     api.get<MatchResult>(`/matches/results/${matchId}`),
+
+  // Lấy trận đấu theo mùa giải
+  getBySeason: (seasonId: number) =>
+    api.get<Match[]>(`/matches/season/${seasonId}`),
+
+  // Lấy KẾT QUẢ theo mùa giải 
+getResultsBySeason: (seasonId: number) =>
+  api.get<MatchResult[]>(`/matches/season/${seasonId}/results`),
 
   // Lấy kết quả theo vòng đấu
   getByRound: (roundId: number) =>
@@ -114,7 +131,15 @@ export const resultApi = {
     api.get<MatchResult[]>(`/matches/results/team/${teamId}`),
 
   // Lấy bảng xếp hạng
-  getStandings: () => api.get<StandingTeam[]>("/matches/results/standings"),
+  getStandings: (seasonId?: number) => {
+    const params =
+      seasonId !== undefined
+        ? {
+            seasonId,
+          }
+        : {};
+    return api.get<StandingTeam[]>("/matches/results/standings", { params });
+  },
 };
 
 // Re-export goal API

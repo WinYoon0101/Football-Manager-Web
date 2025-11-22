@@ -22,8 +22,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-import AddPlayerDialog from "../AddPlayerDialog";
-import EditPlayerDialog from "../EditPlayerDialog";
+import AddPlayerDialog from "../players/AddPlayerDialog";
+import EditPlayerDialog from "../players/EditPlayerDialog";
 import type { Player, Team, PlayerType } from "@/lib/types";
 import { playersAPI } from "@/lib/api/players";
 import { teamsAPI } from "@/lib/api/teams";

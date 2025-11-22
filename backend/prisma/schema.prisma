@@ -1,56 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-//
-// ===========================
-//         MODELS
-// ===========================
-//
-
 model Team {
-  id           Int       @id @default(autoincrement())
-  name         String
-  homeStadium  String?     
-  playerCount  Int?         
-  image        String?
+  id             Int           @id @default(autoincrement())
+  name           String
+  homeStadium    String?
+  playerCount    Int?
+  image          String?
 
-  players         Player[]
-  matchesAsTeam1  Match[]   @relation("Team1")
-  matchesAsTeam2  Match[]   @relation("Team2")
-  goals           Goal[]
-  applications Application[]
-  rankings Ranking[]
+  applications   Application[]
+  goals          Goal[]
+  matchesAsTeam1 Match[]       @relation("Team1")
+  matchesAsTeam2 Match[]       @relation("Team2")
+  players        Player[]
+  rankings       Ranking[]
 
   @@map("teams")
 }
 
 model PlayerType {
-  id      Int     @id @default(autoincrement())
+  id      Int      @id @default(autoincrement())
   name    String
-
   players Player[]
 
   @@map("player_types")
 }
 
 model Player {
-  id           Int      @id @default(autoincrement())
-  teamId       Int      
+  id           Int        @id @default(autoincrement())
+  teamId       Int
   name         String
-  birthDate    DateTime? 
-  playerTypeId Int      
+  birthDate    DateTime?
+  playerTypeId Int
   notes        String?
   image        String?
 
-  team        Team        @relation(fields: [teamId], references: [id])
-  playerType  PlayerType  @relation(fields: [playerTypeId], references: [id])
-  goals       Goal[]
+  goals        Goal[]
+  playerType   PlayerType @relation(fields: [playerTypeId], references: [id])
+  team         Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@map("players")
 }
@@ -58,7 +51,6 @@ model Player {
 model Round {
   id      Int     @id @default(autoincrement())
   name    String
-
   matches Match[]
 
   @@map("rounds")
@@ -66,104 +58,102 @@ model Round {
 
 model Match {
   id        Int      @id @default(autoincrement())
-  roundId   Int     
-  team1Id   Int     
-  team2Id   Int    
-  matchTime DateTime 
+  roundId   Int
+  team1Id   Int
+  team2Id   Int
+  seasonId  Int
+  matchTime DateTime
   stadium   String?
   status    String?
 
-  round   Round @relation(fields: [roundId], references: [id])
-  team1   Team  @relation("Team1", fields: [team1Id], references: [id])
-  team2   Team  @relation("Team2", fields: [team2Id], references: [id])
-  goals   Goal[]
+  round     Round   @relation(fields: [roundId], references: [id])
+  team1     Team    @relation("Team1", fields: [team1Id], references: [id], onDelete: Cascade)
+  team2     Team    @relation("Team2", fields: [team2Id], references: [id], onDelete: Cascade)
+  goals     Goal[]
+  season    Season  @relation("SeasonMatches", fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@map("matches")
 }
 
 model GoalType {
-  id    Int     @id @default(autoincrement())
+  id    Int    @id @default(autoincrement())
   name  String
-
   goals Goal[]
 
   @@map("goal_types")
 }
 
 model Goal {
-  id         Int @id @default(autoincrement())
-  matchId    Int  
-  teamId     Int 
-  playerId   Int  
-  goalTypeId Int 
+  id         Int      @id @default(autoincrement())
+  matchId    Int
+  teamId     Int
+  playerId   Int
+  goalTypeId Int
   minute     Int
 
-  match     Match    @relation(fields: [matchId], references: [id])
-  team      Team     @relation(fields: [teamId], references: [id])
-  player    Player   @relation(fields: [playerId], references: [id])
-  goalType  GoalType @relation(fields: [goalTypeId], references: [id])
+  goalType   GoalType @relation(fields: [goalTypeId], references: [id])
+  match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@map("goals")
 }
 
 model Parameter {
-  id                Int @id @default(autoincrement())
-  minAge            Int? 
-  maxAge            Int? 
-  minPlayers        Int? 
-  maxPlayers        Int? 
-  maxForeignPlayers Int? 
-  minGoalMinute     Int? 
-  maxGoalMinute     Int? 
-  
-  winScore        Int      @default(3)
-  drawScore        Int      @default(1)
+  id                Int      @id @default(autoincrement())
+  minAge            Int?
+  maxAge            Int?
+  minPlayers        Int?
+  maxPlayers        Int?
+  maxForeignPlayers Int?
+  minGoalMinute     Int?
+  maxGoalMinute     Int?
+  categorySort      String[] @default(["điểm", "hiệu_số", "bàn_thắng", "đối_kháng"])
+  drawScore         Int      @default(1)
   loseScore         Int      @default(0)
-
-   // Sắp xếp theo thứ tự trong mảng
-   categorySort      String[] @default(["điểm", "hiệu_số", "bàn_thắng"])
+  winScore          Int      @default(3)
 
   @@map("parameters")
 }
 
-
 model Season {
-  id        Int      @id @default(autoincrement())
-  name      String
-  startDate DateTime
-  endDate   DateTime
+  id           Int           @id @default(autoincrement())
+  name         String
+  startDate    DateTime
+  endDate      DateTime
 
-  rankings     Ranking[]
   applications Application[]
+  rankings     Ranking[]
+  matches      Match[]       @relation("SeasonMatches")
 
   @@map("season")
 }
 
 model Application {
-  id        Int      @id @default(autoincrement())
-  seasonId  Int
-  teamId    Int
+  id         Int      @id @default(autoincrement())
+  seasonId   Int
+  teamId     Int
   dateSignin DateTime @default(now())
-  status    String?
+  status     String?
 
-  season Season @relation(fields: [seasonId], references: [id])
-  team   Team   @relation(fields: [teamId], references: [id])
+  season     Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@map("application")
 }
 
 model Ranking {
-  id             Int @id @default(autoincrement())
+  id             Int    @id @default(autoincrement())
   teamId         Int
   seasonId       Int
-  win            Int @default(0)
-  lose           Int @default(0)
-  draw           Int @default(0)
-  points         Int @default(0)
-  goalDifference Int @default(0)
+  win            Int    @default(0)
+  lose           Int    @default(0)
+  draw           Int    @default(0)
+  points         Int    @default(0)
+  goalDifference Int    @default(0)
 
-  team   Team   @relation(fields: [teamId], references: [id])
-  season Season @relation(fields: [seasonId], references: [id])
+  season         Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  team           Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@map("ranking")
 }

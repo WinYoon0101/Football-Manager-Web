@@ -28,11 +28,14 @@ import {
   Calendar,
   MapPin,
   Trophy,
+  Clock,
 } from "lucide-react";
 import { matchApi, resultApi, goalApi } from "@/lib/api/matches";
 import { api } from "@/lib/api/axios";
 import type { Match, MatchResult, Player, GoalType } from "@/lib/types";
 import { toast } from "react-toastify";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 interface GoalForm {
   playerId: number | "";
@@ -64,6 +67,21 @@ export default function MatchUpdatePage() {
     goalTypeId: "",
     minute: "",
   });
+
+  useEffect(() => {
+    AOS.init({
+      duration: 800,
+      once: true,
+      easing: "ease-out-quart",
+      offset: 80,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      AOS.refresh();
+    }
+  }, [loading]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -278,12 +296,22 @@ export default function MatchUpdatePage() {
     });
   };
 
+  const pageBackgroundStyle = {
+    backgroundImage:
+      'linear-gradient(rgba(8, 21, 56, 0.5), rgba(8, 21, 56, 0.55)), url("/bg.jpg")',
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundAttachment: "fixed",
+  } as const;
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải thông tin trận đấu...</p>
+      <div className="min-h-screen" style={pageBackgroundStyle}>
+        <div className="min-h-screen bg-black/30 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+            <p className="mt-4">Đang tải thông tin trận đấu...</p>
+          </div>
         </div>
       </div>
     );
@@ -291,88 +319,178 @@ export default function MatchUpdatePage() {
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Không tìm thấy trận đấu
-          </h1>
-          <Button onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Quay lại
-          </Button>
+      <div className="min-h-screen" style={pageBackgroundStyle}>
+        <div className="min-h-screen bg-black/40 flex items-center justify-center">
+          <div className="text-center text-white">
+            <h1 className="text-2xl font-bold mb-4">Không tìm thấy trận đấu</h1>
+            <Button
+              className="text-white border border-white/20"
+              variant="ghost"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Quay lại
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
+  const team1GoalEvents =
+    matchResult && match?.team1Id
+      ? matchResult.goals.filter((goal) => goal.team.id === match.team1Id)
+      : [];
+
+  const team2GoalEvents =
+    matchResult && match?.team2Id
+      ? matchResult.goals.filter((goal) => goal.team.id === match.team2Id)
+      : [];
+
+  const getWinnerLabel = () => {
+    if (!matchResult) return null;
+    switch (matchResult.winner) {
+      case "team1":
+        return `${match.team1?.name} thắng`;
+      case "team2":
+        return `${match.team2?.name} thắng`;
+      case "draw":
+        return "Hòa";
+      default:
+        return null;
+    }
+  };
+
+  const getScoreTone = (team: "team1" | "team2") => {
+    if (!matchResult || matchResult.winner === "draw") {
+      return "text-white";
+    }
+    return matchResult.winner === team ? "text-white" : "text-white/60";
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen" style={pageBackgroundStyle}>
+      <div className="container mx-auto px-4 py-8" data-aos="fade-in">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={() => router.back()}>
+        <div
+          className="flex items-center justify-between mb-6"
+          data-aos="fade-down"
+        >
+          <Button
+            className="text-white"
+            variant="ghost"
+            onClick={() => router.back()}
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Quay lại
           </Button>
-          <Button onClick={() => router.push(`/match/${matchId}`)}>
+          <Button
+            className="bg-[#3872ec] hover:bg-[#2f5fc3] text-white border border-white/10"
+            onClick={() => router.push(`/match/${matchId}`)}
+          >
             Xem chi tiết trận đấu
           </Button>
         </div>
 
         {/* Match Info */}
-        <Card className="mb-6">
-          <CardHeader className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Trophy className="h-5 w-5 text-blue-600" />
-              <CardDescription>{match.round?.name}</CardDescription>
-            </div>
-            <CardTitle className="text-3xl font-bold">
-              {match.team1?.name} vs {match.team2?.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card
+          className="mb-6 border border-[#3872ec]/40 bg-gradient-to-br from-[#1e3c8f] via-[#3872ec] to-[#1a2f6c] text-white shadow-2xl"
+          data-aos="fade-up"
+          data-aos-delay="100"
+        >
+          <CardContent className="p-6 md:p-8">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-8 items-center text-center">
               {/* Team 1 */}
-              <div className="text-center">
-                {match.team1?.image && (
-                  <img
-                    src={match.team1.image}
-                    alt={match.team1.name}
-                    className="w-24 h-24 mx-auto rounded-full object-cover mb-4"
-                  />
-                )}
-                <h3 className="text-xl font-semibold">{match.team1?.name}</h3>
-                <div className="text-4xl font-bold text-blue-600 mt-2">
-                  {matchResult?.team1Goals || 0}
+              <div className="space-y-4">
+                <div className="flex flex-col items-center gap-3">
+                  {match.team1?.image ? (
+                    <img
+                      src={match.team1.image}
+                      alt={match.team1.name}
+                      className="w-24 h-24 rounded-full object-cover border border-white/10 shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-4xl font-bold">
+                      {match.team1?.name?.charAt(0)}
+                    </div>
+                  )}
+                  <h3 className="text-2xl font-semibold">
+                    {match.team1?.name}
+                  </h3>
+                </div>
+                <div className="space-y-1 text-sm text-white/70">
+                  {team1GoalEvents.map((goal) => (
+                    <div key={goal.id}>
+                      {goal.player.name} {goal.minute}'
+                    </div>
+                  ))}
+                  {team1GoalEvents.length === 0 && (
+                    <div className="text-white/40">Chưa có bàn thắng</div>
+                  )}
                 </div>
               </div>
 
-              {/* Match Details */}
-              <div className="text-center space-y-4">
-                <div className="text-6xl font-bold text-gray-400">VS</div>
-                {matchResult && (
-                  <Badge className="px-4 py-2">
-                    {matchResult.winner === "team1"
-                      ? match.team1?.name + " thắng"
-                      : matchResult.winner === "team2"
-                      ? match.team2?.name + " thắng"
-                      : "Hòa"}
+              {/* Center scoreboard */}
+              <div className="space-y-5">
+                <div className="flex items-center justify-center gap-2 text-white/80 uppercase text-xs tracking-[0.4em]">
+                  <Trophy className="h-4 w-4" />
+                  <span>{match.round?.name || "Trận đấu"}</span>
+                </div>
+                <div className="flex items-center justify-center gap-6 text-6xl font-bold drop-shadow-lg">
+                  <span className={`${getScoreTone("team1")}`}>
+                    {matchResult ? matchResult.team1Goals : "-"}
+                  </span>
+                  <span className="text-white/50 text-4xl">-</span>
+                  <span className={`${getScoreTone("team2")}`}>
+                    {matchResult ? matchResult.team2Goals : "-"}
+                  </span>
+                </div>
+                {/* {getWinnerLabel() && (
+                  <Badge className="bg-white/15 text-white border border-white/20 px-4 py-2">
+                    {getWinnerLabel()}
                   </Badge>
-                )}
+                )} */}
+                <div className="space-y-2 text-sm text-white/80">
+                  <div className="flex items-center justify-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>Diễn ra {formatDate(match.matchTime)}</span>
+                  </div>
+                  {match.stadium && (
+                    <div className="flex items-center justify-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>Sân {match.stadium}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Team 2 */}
-              <div className="text-center">
-                {match.team2?.image && (
-                  <img
-                    src={match.team2.image}
-                    alt={match.team2.name}
-                    className="w-24 h-24 mx-auto rounded-full object-cover mb-4"
-                  />
-                )}
-                <h3 className="text-xl font-semibold">{match.team2?.name}</h3>
-                <div className="text-4xl font-bold text-red-600 mt-2">
-                  {matchResult?.team2Goals || 0}
+              <div className="space-y-4">
+                <div className="flex flex-col items-center gap-3">
+                  {match.team2?.image ? (
+                    <img
+                      src={match.team2.image}
+                      alt={match.team2.name}
+                      className="w-24 h-24 rounded-full object-cover border border-white/10 shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-4xl font-bold">
+                      {match.team2?.name?.charAt(0)}
+                    </div>
+                  )}
+                  <h3 className="text-2xl font-semibold">
+                    {match.team2?.name}
+                  </h3>
+                </div>
+                <div className="space-y-1 text-sm text-white/70">
+                  {team2GoalEvents.map((goal) => (
+                    <div key={goal.id}>
+                      {goal.player.name} {goal.minute}'
+                    </div>
+                  ))}
+                  {team2GoalEvents.length === 0 && (
+                    <div className="text-white/40">Chưa có bàn thắng</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -380,35 +498,51 @@ export default function MatchUpdatePage() {
         </Card>
 
         {/* Update Match Info */}
-        <Card className="mb-6">
+        <Card
+          className="mb-6 bg-white/5 border border-white/10 text-white backdrop-blur-md"
+          data-aos="fade-up"
+          data-aos-delay="140"
+        >
           <CardHeader>
-            <CardTitle>Cập nhật thông tin trận đấu</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-white">
+              Cập nhật thông tin trận đấu
+            </CardTitle>
+            <CardDescription className="text-white/70">
               Chỉnh sửa thời gian và địa điểm thi đấu
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="matchTime">Thời gian thi đấu</Label>
+                <Label className="text-white/80" htmlFor="matchTime">
+                  Thời gian thi đấu
+                </Label>
                 <Input
                   id="matchTime"
                   type="datetime-local"
                   value={matchTime}
                   onChange={(e) => setMatchTime(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
                 />
               </div>
               <div>
-                <Label htmlFor="stadium">Sân vận động</Label>
+                <Label className="text-white/80" htmlFor="stadium">
+                  Sân vận động
+                </Label>
                 <Input
                   id="stadium"
                   value={stadium}
                   onChange={(e) => setStadium(e.target.value)}
                   placeholder="Nhập tên sân vận động"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
                 />
               </div>
             </div>
-            <Button onClick={handleUpdateMatch} disabled={saving}>
+            <Button
+              className="bg-[#3872ec] hover:bg-[#2f5fc3] text-white border border-white/10"
+              onClick={handleUpdateMatch}
+              disabled={saving}
+            >
               <Save className="h-4 w-4 mr-2" />
               {saving ? "Đang lưu..." : "Cập nhật thông tin"}
             </Button>
@@ -416,10 +550,16 @@ export default function MatchUpdatePage() {
         </Card>
 
         {/* Add Goal */}
-        <Card className="mb-6">
+        <Card
+          className="mb-6 bg-white/5 border border-white/10 text-white backdrop-blur-md"
+          data-aos="fade-up"
+          data-aos-delay="180"
+        >
           <CardHeader>
-            <CardTitle>Thêm bàn thắng</CardTitle>
-            <CardDescription>Ghi nhận bàn thắng trong trận đấu</CardDescription>
+            <CardTitle className="text-white">Thêm bàn thắng</CardTitle>
+            <CardDescription className="text-white/70">
+              Ghi nhận bàn thắng trong trận đấu
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {staticDataLoading ? (
@@ -435,7 +575,7 @@ export default function MatchUpdatePage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <Label>Đội ghi bàn</Label>
+                  <Label className="text-white/80">Đội ghi bàn</Label>
                   <Select
                     value={goalForm.teamId ? goalForm.teamId.toString() : ""}
                     onValueChange={(value) =>
@@ -446,7 +586,7 @@ export default function MatchUpdatePage() {
                       })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
                       <SelectValue placeholder="Chọn đội" />
                     </SelectTrigger>
                     <SelectContent>
@@ -461,7 +601,7 @@ export default function MatchUpdatePage() {
                 </div>
 
                 <div>
-                  <Label>Cầu thủ ghi bàn</Label>
+                  <Label className="text-white/80">Cầu thủ ghi bàn</Label>
                   <Select
                     value={
                       goalForm.playerId ? goalForm.playerId.toString() : ""
@@ -471,7 +611,7 @@ export default function MatchUpdatePage() {
                     }
                     disabled={!goalForm.teamId}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white disabled:opacity-50">
                       <SelectValue placeholder="Chọn cầu thủ" />
                     </SelectTrigger>
                     <SelectContent>
@@ -491,7 +631,7 @@ export default function MatchUpdatePage() {
                 </div>
 
                 <div>
-                  <Label>Loại bàn thắng</Label>
+                  <Label className="text-white/80">Loại bàn thắng</Label>
                   <Select
                     value={
                       goalForm.goalTypeId ? goalForm.goalTypeId.toString() : ""
@@ -500,7 +640,7 @@ export default function MatchUpdatePage() {
                       setGoalForm({ ...goalForm, goalTypeId: Number(value) })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
                       <SelectValue placeholder="Chọn loại" />
                     </SelectTrigger>
                     <SelectContent>
@@ -514,7 +654,7 @@ export default function MatchUpdatePage() {
                 </div>
 
                 <div>
-                  <Label>Phút ghi bàn</Label>
+                  <Label className="text-white/80">Phút ghi bàn</Label>
                   <Input
                     type="number"
                     min="0"
@@ -527,12 +667,14 @@ export default function MatchUpdatePage() {
                       })
                     }
                     placeholder="45"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
                   />
                 </div>
               </div>
             )}
 
             <Button
+              className="bg-[#2ebc60] hover:bg-[#24964c] text-white border border-white/10"
               onClick={handleAddGoal}
               disabled={staticDataLoading || addingGoal}
             >
@@ -548,10 +690,14 @@ export default function MatchUpdatePage() {
 
         {/* Goals List */}
         {matchResult && matchResult.goals.length > 0 && (
-          <Card>
+          <Card
+            className="bg-white/5 border border-white/10 text-white backdrop-blur-md"
+            data-aos="fade-up"
+            data-aos-delay="220"
+          >
             <CardHeader>
-              <CardTitle>Danh sách bàn thắng</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-white">Danh sách bàn thắng</CardTitle>
+              <CardDescription className="text-white/70">
                 {matchResult.goals.length} bàn thắng đã ghi nhận
               </CardDescription>
             </CardHeader>
@@ -562,17 +708,17 @@ export default function MatchUpdatePage() {
                   .map((goal) => (
                     <div
                       key={goal.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                      className="flex items-center justify-between p-4 border border-white/10 rounded-lg bg-white/5 hover:bg-white/10 transition text-white"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                        <div className="w-12 h-12 rounded-full bg-[#2ebc60] text-white flex items-center justify-center font-bold">
                           {goal.minute}'
                         </div>
-                        <div>
+                        <div className="space-y-1">
                           <div className="font-semibold">
                             {goal.player.name}
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm text-white/70">
                             {goal.team.name} • {goal.goalType.name}
                           </div>
                         </div>
@@ -581,7 +727,7 @@ export default function MatchUpdatePage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteGoal(goal.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-300 hover:text-red-200"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

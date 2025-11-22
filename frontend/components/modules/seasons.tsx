@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { seasonApi, Season } from "@/lib/api/seasons";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,7 +31,28 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+import { useRouter } from "next/navigation";
+
+// ===== Helper: Tính trạng thái mùa giải =====
+function getSeasonStatus(startDate: string | null, endDate: string | null) {
+  if (!startDate || !endDate) return "Không rõ";
+
+  const now = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (now < start) return "Chưa bắt đầu";
+  if (now > end) return "Kết thúc";
+  return "Đang diễn ra";
+}
+
 export default function SeasonsModule() {
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+
+  // Filters
   const [filterName, setFilterName] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
@@ -38,32 +61,75 @@ export default function SeasonsModule() {
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
 
-  const [editing, setEditing] = useState<any>(null);
-  const [deleting, setDeleting] = useState<any>(null);
+  // Data for modals
+  const [editing, setEditing] = useState<Season | null>(null);
+  const [deleting, setDeleting] = useState<Season | null>(null);
 
-  const data = [
-    {
-      name: "Giải bóng đá hạng Nhì Quốc gia",
-      status: "Chưa bắt đầu",
-      start: "26-03-05",
-      end: "26-12-01",
-      teams: 11,
-    },
-    {
-      name: "Giải bóng đá 4.1 toàn quốc",
-      status: "Đang diễn ra",
-      start: "24-03-05",
-      end: "24-12-01",
-      teams: 14,
-    },
-    {
-      name: "NIGHT WOLF VLEAGUE 1 - 2023/24",
-      status: "Đang diễn ra",
-      start: "23-10-20",
-      end: "24-06-30",
-      teams: 14,
-    },
-  ];
+  // Add form state
+  const [addForm, setAddForm] = useState({
+    name: "",
+    startDate: "",
+    endDate: "",
+  });
+
+  // Edit form state
+  const [editForm, setEditForm] = useState({
+    name: "",
+    startDate: "",
+    endDate: "",
+  });
+
+  // ===== Fetch API =====
+  async function loadSeasons() {
+    try {
+      setLoading(true);
+      const res = await seasonApi.getAll();
+      setSeasons(res.data);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadSeasons();
+  }, []);
+
+  // ===== FILTER =====
+  const filtered = seasons.filter((s) => {
+    const status = getSeasonStatus(s.startDate, s.endDate);
+
+    return (
+      s.name.toLowerCase().includes(filterName.toLowerCase()) &&
+      (filterStatus === "" ||
+        filterStatus === "all" ||
+        filterStatus === status)
+    );
+  });
+
+  // ===== CREATE =====
+  async function handleAdd() {
+    await seasonApi.create(addForm);
+    setOpenAdd(false);
+    loadSeasons();
+  }
+
+  // ===== UPDATE =====
+  async function handleUpdate() {
+    if (!editing) return;
+
+    await seasonApi.update(editing.id, editForm);
+    setOpenEdit(false);
+    loadSeasons();
+  }
+
+  // ===== DELETE =====
+  async function handleDelete() {
+    if (!deleting) return;
+
+    await seasonApi.delete(deleting.id);
+    setOpenDelete(false);
+    loadSeasons();
+  }
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen text-gray-900">
@@ -86,9 +152,9 @@ export default function SeasonsModule() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả</SelectItem>
-            <SelectItem value="running">Đang diễn ra</SelectItem>
-            <SelectItem value="pending">Chưa bắt đầu</SelectItem>
-            <SelectItem value="ended">Kết thúc</SelectItem>
+            <SelectItem value="Đang diễn ra">Đang diễn ra</SelectItem>
+            <SelectItem value="Chưa bắt đầu">Chưa bắt đầu</SelectItem>
+            <SelectItem value="Kết thúc">Kết thúc</SelectItem>
           </SelectContent>
         </Select>
 
@@ -99,15 +165,11 @@ export default function SeasonsModule() {
           >
             + Thêm Mùa Giải
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow">
-            Xuất Dữ Liệu
-          </Button>
         </div>
       </div>
 
       {/* TABLE */}
       <Card className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        {/* HEADER */}
         <CardHeader className="grid grid-cols-[2fr,1fr,1fr,1fr,0.7fr,0.4fr] px-6 py-4 font-semibold text-sm text-gray-700 bg-gray-100">
           <div>Tên Mùa Giải</div>
           <div>Tình Trạng</div>
@@ -118,172 +180,191 @@ export default function SeasonsModule() {
         </CardHeader>
 
         <CardContent className="px-0">
-          {data.map((item, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-[2fr,1fr,1fr,1fr,0.7fr,0.4fr] px-6 py-4 items-center text-sm 
-                hover:bg-gray-50 transition-colors border-b last:border-0"
-            >
-              {/* Tên */}
-              <div className="text-blue-700 font-medium hover:underline cursor-pointer">
-                {item.name}
-              </div>
+          {loading && <p className="p-4 text-gray-500">Đang tải...</p>}
 
-              {/* Tình trạng */}
-              <div>
-               <span
-  className={`px-2 py-1 rounded-md text-xs font-medium border
-    ${
-      item.status === "Đang diễn ra"
-        ? "bg-blue-100 text-blue-700 border-blue-300"
-        : item.status === "Chưa bắt đầu"
-        ? "bg-yellow-100 text-yellow-700 border-yellow-300"
-        : item.status === "Kết thúc"
-        ? "bg-red-100 text-red-700 border-red-300"
-        : "bg-gray-100 text-gray-700 border-gray-300"
-    }
-  `}
+          {!loading &&
+            filtered.map((item) => {
+              const status = getSeasonStatus(
+                item.startDate,
+                item.endDate
+              );
+
+              return (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-[2fr,1fr,1fr,1fr,0.7fr,0.4fr] px-6 py-4 items-center text-sm 
+                    hover:bg-gray-50 transition-colors border-b last:border-0"
+                >
+                  <div
+  className="text-blue-700 font-medium hover:underline cursor-pointer"
+  onClick={() => router.push(`/season/${item.id}`)}
 >
-  {item.status}
-</span>
-              </div>
+  {item.name}
+</div>
 
-              <div className="text-gray-700">{item.start}</div>
-              <div className="text-gray-700">{item.end}</div>
-
-              <div className="font-medium text-gray-800">{item.teams}</div>
-
-              {/* Dropdown 3 chấm */}
-              <div className="flex justify-center">
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <EllipsisVertical className="w-5 h-5 cursor-pointer text-gray-500 hover:text-gray-700" />
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setEditing(item);
-                        setOpenEdit(true);
-                      }}
+                  <div>
+                    <span
+                      className={`px-2 py-1 rounded-md text-xs font-medium border
+                      ${
+                        status === "Đang diễn ra"
+                          ? "bg-blue-100 text-blue-700 border-blue-300"
+                          : status === "Chưa bắt đầu"
+                          ? "bg-yellow-100 text-yellow-700 border-yellow-300"
+                          : "bg-red-100 text-red-700 border-red-300"
+                      }`}
                     >
-                      Chỉnh sửa
-                    </DropdownMenuItem>
+                      {status}
+                    </span>
+                  </div>
 
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => {
-                        setDeleting(item);
-                        setOpenDelete(true);
-                      }}
-                    >
-                      Xóa
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          ))}
+                  <div>{item.startDate?.slice(0, 10)}</div>
+                  <div>{item.endDate?.slice(0, 10)}</div>
+
+                  <div className="font-medium text-gray-800">—</div>
+
+                  {/* Dropdown */}
+                  <div className="flex justify-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <EllipsisVertical className="w-5 h-5 cursor-pointer text-gray-500 hover:text-gray-700" />
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditing(item);
+                            setEditForm({
+                              name: item.name,
+                              startDate: item.startDate?.slice(0, 10) || "",
+                              endDate: item.endDate?.slice(0, 10) || "",
+                            });
+                            setOpenEdit(true);
+                          }}
+                        >
+                          Chỉnh sửa
+                        </DropdownMenuItem>
+
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => {
+                            setDeleting(item);
+                            setOpenDelete(true);
+                          }}
+                        >
+                          Xóa
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              );
+            })}
         </CardContent>
       </Card>
 
-    {/* ADD MODAL */}
-<Dialog open={openAdd} onOpenChange={setOpenAdd}>
-  <DialogContent className="max-w-md rounded-2xl">
-    <DialogHeader>
-      <DialogTitle className="text-lg font-semibold">Thêm Mùa Giải</DialogTitle>
-      <p className="text-sm text-gray-500">Điền thông tin bên dưới để tạo mùa giải mới.</p>
-    </DialogHeader>
+      {/* ADD MODAL */}
+      <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Thêm Mùa Giải</DialogTitle>
+          </DialogHeader>
 
-    <div className="space-y-4 py-4">
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Tên mùa giải</label>
-        <Input placeholder="VD: Mùa giải 2025" />
-      </div>
+          <div className="space-y-4 py-4">
+            <Input
+              placeholder="Tên mùa giải"
+              value={addForm.name}
+              onChange={(e) =>
+                setAddForm({ ...addForm, name: e.target.value })
+              }
+            />
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Ngày bắt đầu</label>
-          <Input type="date" />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Ngày kết thúc</label>
-          <Input type="date" />
-        </div>
-      </div>
-    </div>
-
-    <DialogFooter>
-      <Button className="w-full" onClick={() => setOpenAdd(false)}>
-        Lưu
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
-{/* EDIT MODAL */}
-{editing && (
-  <Dialog open={openEdit} onOpenChange={setOpenEdit}>
-    <DialogContent className="max-w-md rounded-2xl">
-      <DialogHeader>
-        <DialogTitle className="text-lg font-semibold">Chỉnh sửa Mùa Giải</DialogTitle>
-        <p className="text-sm text-gray-500">Cập nhật thông tin mùa giải.</p>
-      </DialogHeader>
-
-      <div className="space-y-4 py-4">
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Tên mùa giải</label>
-          <Input defaultValue={editing.name} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Ngày bắt đầu</label>
-            <Input type="date" defaultValue={editing.start} />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                type="date"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, startDate: e.target.value })
+                }
+              />
+              <Input
+                type="date"
+                onChange={(e) =>
+                  setAddForm({ ...addForm, endDate: e.target.value })
+                }
+              />
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Ngày kết thúc</label>
-            <Input type="date" defaultValue={editing.end} />
-          </div>
-        </div>
-      </div>
+          <DialogFooter>
+            <Button className="w-full" onClick={handleAdd}>
+              Lưu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <DialogFooter>
-        <Button className="w-full" onClick={() => setOpenEdit(false)}>
-          Cập nhật
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-)}
+      {/* EDIT MODAL */}
+      {editing && (
+        <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+          <DialogContent className="max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>Chỉnh sửa Mùa Giải</DialogTitle>
+            </DialogHeader>
 
+            <div className="space-y-4 py-4">
+              <Input
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
+              />
 
-      {/* DELETE CONFIRM MODAL */}
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  type="date"
+                  value={editForm.startDate}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, startDate: e.target.value })
+                  }
+                />
+
+                <Input
+                  type="date"
+                  value={editForm.endDate}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, endDate: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button className="w-full" onClick={handleUpdate}>
+                Cập nhật
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* DELETE MODAL */}
       {deleting && (
         <Dialog open={openDelete} onOpenChange={setOpenDelete}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
               <DialogTitle>Xóa Mùa Giải</DialogTitle>
               <DialogDescription>
-                Bạn có chắc chắn muốn xóa "
-                <span className="font-semibold">{deleting.name}</span>"?
-                <br />
-                Hành động này không thể hoàn tác.
+                Bạn có chắc muốn xóa{" "}
+                <span className="font-semibold">{deleting.name}</span>?
               </DialogDescription>
             </DialogHeader>
 
-            <DialogFooter className="mt-4">
+            <DialogFooter>
               <Button variant="outline" onClick={() => setOpenDelete(false)}>
                 Hủy
               </Button>
               <Button
                 className="bg-red-600 hover:bg-red-700"
-                onClick={() => {
-                  alert("Đã xóa: " + deleting.name);
-                  setOpenDelete(false);
-                }}
+                onClick={handleDelete}
               >
                 Xóa
               </Button>
