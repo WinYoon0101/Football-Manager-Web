@@ -13,6 +13,7 @@ model Team {
   homeStadium    String?
   playerCount    Int?
   image          String?
+
   applications   Application[]
   goals          Goal[]
   matchesAsTeam1 Match[]       @relation("Team1")
@@ -39,9 +40,10 @@ model Player {
   playerTypeId Int
   notes        String?
   image        String?
+
   goals        Goal[]
   playerType   PlayerType @relation(fields: [playerTypeId], references: [id])
-  team         Team       @relation(fields: [teamId], references: [id])
+  team         Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@map("players")
 }
@@ -59,12 +61,16 @@ model Match {
   roundId   Int
   team1Id   Int
   team2Id   Int
+  seasonId  Int
   matchTime DateTime
   stadium   String?
+  status    String?
+
+  round     Round   @relation(fields: [roundId], references: [id])
+  team1     Team    @relation("Team1", fields: [team1Id], references: [id], onDelete: Cascade)
+  team2     Team    @relation("Team2", fields: [team2Id], references: [id], onDelete: Cascade)
   goals     Goal[]
-  round     Round    @relation(fields: [roundId], references: [id])
-  team1     Team     @relation("Team1", fields: [team1Id], references: [id])
-  team2     Team     @relation("Team2", fields: [team2Id], references: [id])
+  season    Season  @relation("SeasonMatches", fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@map("matches")
 }
@@ -84,10 +90,11 @@ model Goal {
   playerId   Int
   goalTypeId Int
   minute     Int
+
   goalType   GoalType @relation(fields: [goalTypeId], references: [id])
-  match      Match    @relation(fields: [matchId], references: [id])
-  player     Player   @relation(fields: [playerId], references: [id])
-  team       Team     @relation(fields: [teamId], references: [id])
+  match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@map("goals")
 }
@@ -101,7 +108,7 @@ model Parameter {
   maxForeignPlayers Int?
   minGoalMinute     Int?
   maxGoalMinute     Int?
-  categorySort      String[] @default(["điểm", "hiệu_số", "bàn_thắng"])
+  categorySort      String[] @default(["điểm", "hiệu_số", "bàn_thắng", "đối_kháng"])
   drawScore         Int      @default(1)
   loseScore         Int      @default(0)
   winScore          Int      @default(3)
@@ -114,8 +121,10 @@ model Season {
   name         String
   startDate    DateTime
   endDate      DateTime
+
   applications Application[]
   rankings     Ranking[]
+  matches      Match[]       @relation("SeasonMatches")
 
   @@map("season")
 }
@@ -126,8 +135,9 @@ model Application {
   teamId     Int
   dateSignin DateTime @default(now())
   status     String?
-  season     Season   @relation(fields: [seasonId], references: [id])
-  team       Team     @relation(fields: [teamId], references: [id])
+
+  season     Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@map("application")
 }
@@ -141,8 +151,9 @@ model Ranking {
   draw           Int    @default(0)
   points         Int    @default(0)
   goalDifference Int    @default(0)
-  season         Season @relation(fields: [seasonId], references: [id])
-  team           Team   @relation(fields: [teamId], references: [id])
+
+  season         Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  team           Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@map("ranking")
 }

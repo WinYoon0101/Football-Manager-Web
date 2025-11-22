@@ -75,6 +75,7 @@ export const matchApi = {
     team2Id: number;
     matchTime: string;
     stadium?: string;
+    seasonId: number;
   }) => api.post<Match>("/matches", data),
 
   // Cập nhật trận đấu
@@ -112,6 +113,14 @@ export const resultApi = {
   // Lấy kết quả trận đấu theo ID
   getById: (matchId: number) =>
     api.get<MatchResult>(`/matches/results/${matchId}`),
+
+  // Lấy trận đấu theo mùa giải
+  getBySeason: (seasonId: number) =>
+    api.get<Match[]>(`/matches/season/${seasonId}`),
+
+  // Lấy KẾT QUẢ theo mùa giải 
+getResultsBySeason: (seasonId: number) =>
+  api.get<MatchResult[]>(`/matches/season/${seasonId}/results`),
 
   // Lấy kết quả theo vòng đấu
   getByRound: (roundId: number) =>

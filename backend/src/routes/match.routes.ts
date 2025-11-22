@@ -11,6 +11,8 @@ router.get("/results/:id", MatchController.getResultById);
 router.get("/results", MatchController.getAllResults);
 
 // Match routes
+router.get("/season/:seasonId", MatchController.getBySeason);
+router.get("/season/:seasonId/results", MatchController.getResultsBySeason);
 router.get("/rounds", MatchController.getRounds);
 router.get("/", MatchController.getAll);
 router.get("/:id", MatchController.getById);

@@ -112,6 +112,57 @@ class MatchService {
     });
   }
 
+  async getResultsBySeason(seasonId: number) {
+  const matches = await prisma.match.findMany({
+    where: { seasonId },
+    include: {
+      round: true,
+      team1: true,
+      team2: true,
+      goals: {
+        include: {
+          team: true,
+          player: {
+            select: { id: true, name: true, image: true },
+          },
+          goalType: true,
+        },
+        orderBy: { minute: "asc" },
+      },
+    },
+    orderBy: { matchTime: "asc" },
+  });
+
+  return matches.map((m) => this.calculateMatchResult(m));
+}
+
+
+
+// Lấy trận đấu theo mùa
+async getBySeason(seasonId: number) {
+  return prisma.match.findMany({
+    where: { seasonId },
+    include: {
+      round: true,
+      team1: true,
+      team2: true,
+      goals: {
+        include: {
+          player: true,
+          goalType: true,
+          team: true,
+        },
+      },
+    },
+    orderBy: { matchTime: "asc" },
+  });
+}
+
+
+
+
+
+
   // Lấy 1 match theo id
   async getById(id: number) {
     return prisma.match.findUnique({
@@ -130,29 +181,39 @@ class MatchService {
     });
   }
 
-  // Tạo match mới
-  async create(data: {
-    roundId: number;
-    team1Id: number;
-    team2Id: number;
-    matchTime: Date;
-    stadium?: string | null;
-  }) {
-    return prisma.match.create({
-      data,
-      include: {
-        round: true,
-        team1: true,
-        team2: true,
-        goals: {
-          include: {
-            player: true,
-            goalType: true,
-          },
+
+ // Tạo match mới (CÓ season)
+async create(data: {
+  roundId: number;
+  team1Id: number;
+  team2Id: number;
+  matchTime: Date;
+  stadium?: string | null;
+  seasonId: number;
+}) {
+  return prisma.match.create({
+    data: {
+      roundId: data.roundId,
+      team1Id: data.team1Id,
+      team2Id: data.team2Id,
+      matchTime: data.matchTime,
+      stadium: data.stadium ?? null,
+      seasonId: data.seasonId, 
+    },
+    include: {
+      round: true,
+      team1: true,
+      team2: true,
+      goals: {
+        include: {
+          player: true,
+          goalType: true,
         },
       },
-    });
-  }
+    },
+  });
+}
+
 
   // Cập nhật match
   async update(id: number, data: any) {

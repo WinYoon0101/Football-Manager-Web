@@ -40,7 +40,40 @@ class SeasonService {
       ],
     });
   }
+  // Tạo mùa giải mới
+  async create(data: {
+    name: string;
+    startDate: Date;
+    endDate: Date;
+  }) {
+    return prisma.season.create({
+      data,
+    });
+  }
+
+  // Cập nhật mùa giải
+  async update(id: number, data: {
+    name?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }) {
+    return prisma.season.update({
+      where: { id },
+      data,
+    });
+  }
+
+  // Xóa mùa giải (chú ý: nếu có rankings/applications liên kết cần xử lý cascade)
+  async delete(id: number) {
+    return prisma.season.delete({
+      where: { id },
+    });
+  }
+  
 }
+
+
+
 
 export default new SeasonService();
 

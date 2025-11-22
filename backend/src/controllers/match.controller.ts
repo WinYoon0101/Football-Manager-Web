@@ -49,7 +49,7 @@ class MatchController {
   // Tạo match mới
   async create(req: Request, res: Response) {
     try {
-      const { roundId, team1Id, team2Id, matchTime, stadium } = req.body;
+      const { roundId, team1Id, team2Id, matchTime, stadium, seasonId } = req.body;
 
       // Validation
       if (!roundId || isNaN(Number(roundId))) {
@@ -96,6 +96,7 @@ class MatchController {
         team2Id: Number(team2Id),
         matchTime: parsedDate,
         stadium: stadium ? stadium.trim() : null,
+        seasonId: Number(seasonId),
       };
 
       const data = await MatchService.create(matchData);
@@ -266,6 +267,66 @@ class MatchController {
       });
     }
   }
+
+  
+
+  // Lấy trận đấu theo mùa giải
+async getBySeason(req: Request, res: Response) {
+  try {
+    const seasonId = Number(req.params.seasonId);
+
+    if (isNaN(seasonId) || seasonId <= 0) {
+      return res.status(400).json({
+        message: "ID mùa giải không hợp lệ",
+      });
+    }
+
+    // Kiểm tra season có tồn tại không
+    const season = await SeasonService.getById(seasonId);
+    if (!season) {
+      return res.status(404).json({
+        message: "Không tìm thấy mùa giải",
+      });
+    }
+
+    const data = await MatchService.getBySeason(seasonId);
+    res.json(data);
+  } catch (err: any) {
+    console.error("Get matches by season error:", err);
+    res.status(500).json({
+      message: "Không thể lấy danh sách trận đấu theo mùa giải",
+      error: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    });
+  }
+}
+
+// Lấy kết quả trận đấu theo mùa giải
+async getResultsBySeason(req: Request, res: Response) {
+  try {
+    const seasonId = Number(req.params.seasonId);
+
+    if (isNaN(seasonId) || seasonId <= 0) {
+      return res.status(400).json({ message: "ID mùa giải không hợp lệ" });
+    }
+
+    const season = await SeasonService.getById(seasonId);
+    if (!season) {
+      return res.status(404).json({ message: "Không tìm thấy mùa giải" });
+    }
+
+    const data = await MatchService.getResultsBySeason(seasonId);
+    res.json(data);
+
+  } catch (err: any) {
+    console.error("Get results by season error:", err);
+    res.status(500).json({
+      message: "Không thể lấy kết quả theo mùa giải",
+      error: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    });
+  }
+}
+
+
 
   // Lấy tất cả rounds
   async getRounds(req: Request, res: Response) {
