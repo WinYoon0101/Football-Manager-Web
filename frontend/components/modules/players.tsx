@@ -22,8 +22,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-import AddPlayerDialog from "../AddPlayerDialog";
-import EditPlayerDialog from "../EditPlayerDialog";
+import AddPlayerDialog from "../players/AddPlayerDialog";
+import EditPlayerDialog from "../players/EditPlayerDialog";
 import type { Player, Team, PlayerType } from "@/lib/types";
 import { playersAPI } from "@/lib/api/players";
 import { teamsAPI } from "@/lib/api/teams";
@@ -273,23 +273,26 @@ export default function PlayersModule() {
 
           {/* Table */}
       
-<div className="overflow-x-auto border rounded-lg">
-  <table className="w-full text-sm">
-    <thead className="bg-muted/40 text-black">
-      <tr className="h-12">
-        <th className="p-3 text-center w-14 font-medium"></th>
-        <th className="p-3 text-left w-56 font-medium">Tên cầu thủ</th>
-        <th className="p-3 text-center w-28 font-medium">Ngày sinh</th>
-        <th className="p-3 text-center w-40 font-medium">Đội bóng</th>
-        <th className="p-3 text-center w-36 font-medium">Loại cầu thủ</th>
-        <th className="p-3 w-14 font-medium"></th>
+<div className="overflow-x-auto border rounded-xl">
+  <table className="w-full text-sm table-fixed">
+    
+    {/* HEADER */}
+    <thead className="bg-gray-100 text-gray-700">
+      <tr className="grid grid-cols-[0.5fr,1fr,2.5fr,1.4fr,1.2fr,0.5fr] h-12 items-center px-4 font-semibold">
+        <th className="text-center"></th>
+        <th className="text-left">Cầu thủ</th>
+        <th className="text-center">Ngày sinh</th>
+        <th className="text-left">Đội bóng</th>
+        <th className="text-center">Loại cầu thủ</th>
+        <th className="text-center"></th>
       </tr>
     </thead>
 
+    {/* BODY */}
     <tbody>
       {filtered.length === 0 ? (
         <tr>
-          <td colSpan={6} className="text-center p-6 text-muted-foreground">
+          <td colSpan={6} className="text-center p-6 text-gray-500">
             Không tìm thấy cầu thủ nào.
           </td>
         </tr>
@@ -297,42 +300,44 @@ export default function PlayersModule() {
         filtered.map((p, index) => (
           <tr
             key={p.id}
-            className={`${
-              index % 2 === 0 ? "bg-white" : "bg-muted/20"
-            } border-t hover:bg-muted/30 transition h-14`}
+            className={`grid grid-cols-[0.5fr,1fr,2.5fr,1.4fr,1.2fr,0.5fr] items-center px-4 h-16
+            ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+            border-t hover:bg-gray-100 transition`}
           >
-            {/* ========== AVATAR COLUMN ========== */}
-            <td className="text-center">
+            {/* Avatar */}
+            <td className="flex justify-center">
               {p.image ? (
                 <img
                   src={p.image}
                   alt={p.name}
-                  className="w-10 h-10 mx-auto rounded-full object-cover shadow-sm"
+                  className="w-10 h-10 rounded-full object-cover shadow-sm"
                 />
               ) : (
-                <div className="w-11 h-11 mx-auto rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
                   {getInitials(p.name)}
                 </div>
               )}
             </td>
 
-            {/* ========== NAME COLUMN (SEPARATED) ========== */}
-            <td className="p-3 text-left font-medium text-gray-900">
+            {/* Name */}
+            <td className="text-gray-900 font-medium">
               {p.name}
             </td>
 
-            {/* BIRTHDATE */}
-            <td className="p-3 text-center">
+            {/* Birthdate */}
+            <td className="text-center text-gray-700">
               {p.birthDate
                 ? new Date(p.birthDate).toLocaleDateString("vi-VN")
                 : "—"}
             </td>
 
-            {/* TEAM */}
-            <td className="p-3 text-center">{p.team?.name || "—"}</td>
+            {/* Team */}
+            <td className="text-left text-gray-800">
+              {p.team?.name || "—"}
+            </td>
 
-            {/* TYPE */}
-            <td className="p-3 text-center">
+            {/* Type */}
+            <td className="text-center">
               {p.playerType?.name === "domestic"
                 ? "Trong nước"
                 : p.playerType?.name === "foreign"
@@ -340,18 +345,23 @@ export default function PlayersModule() {
                 : p.playerType?.name || "—"}
             </td>
 
-            {/* ACTIONS */}
-            <td className="p-3 text-center">
+            {/* Actions */}
+            <td className="flex justify-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-gray-200 rounded-md"
+                  >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => handleEdit(p)}>
-                    <Pencil className="h-4 w-4 mr-2" /> Chỉnh sửa
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Chỉnh sửa
                   </DropdownMenuItem>
 
                   <DropdownMenuItem
@@ -359,7 +369,8 @@ export default function PlayersModule() {
                     onClick={() => handleDelete(p)}
                     disabled={isSubmitting}
                   >
-                    <Trash2 className="h-4 w-4 mr-2 text-red-600" /> Xóa
+                    <Trash2 className="h-4 w-4 mr-2 text-red-600" />
+                    Xóa
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -370,6 +381,9 @@ export default function PlayersModule() {
     </tbody>
   </table>
 </div>
+
+
+
 
 
         </CardContent>
