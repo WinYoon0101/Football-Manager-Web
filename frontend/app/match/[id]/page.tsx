@@ -216,19 +216,22 @@ export default function MatchDetailPage() {
     <div className="min-h-screen" style={pageBackgroundStyle}>
       <div className="container mx-auto px-4 py-8" data-aos="fade-in">
         {/* Header */}
-        <div
-          className="flex items-center justify-between mb-6"
-          data-aos="fade-down"
-        >
+        <div className="flex items-center justify-between mb-6">
           <Button
             className="text-white"
             variant="ghost"
+            data-aos="fade-down-right"
+            data-aos-delay="50"
             onClick={() => router.back()}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Quay lại
           </Button>
-          <Button onClick={() => router.push(`/match/update/${matchId}`)}>
+          <Button
+            data-aos="fade-down-left"
+            data-aos-delay="50"
+            onClick={() => router.push(`/match/update/${matchId}`)}
+          >
             <Edit className="h-4 w-4 mr-2" />
             Cập nhật kết quả
           </Button>
@@ -237,8 +240,8 @@ export default function MatchDetailPage() {
         {/* Match Info */}
         <Card
           className="mb-6 border border-[#3872ec]/40 bg-gradient-to-br from-[#1e3c8f] via-[#3872ec] to-[#1a2f6c] text-white shadow-2xl"
-          data-aos="fade-up"
-          data-aos-delay="100"
+          data-aos="fade-down"
+          data-aos-delay="300"
         >
           <CardContent className="p-6 md:p-8">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-8 items-center text-center">
@@ -349,8 +352,8 @@ export default function MatchDetailPage() {
         {matchResult && matchResult.goals.length > 0 && (
           <Card
             className="bg-white/5 border border-white/10 text-white backdrop-blur-md"
-            data-aos="fade-up"
-            data-aos-delay="150"
+            data-aos="zoom-in-down"
+            data-aos-delay="350"
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-white">
@@ -393,7 +396,7 @@ export default function MatchDetailPage() {
                         key={goal.id}
                         className="bg-[#177d3b] rounded-lg shadow-lg overflow-hidden"
                         data-aos="fade-up"
-                        data-aos-delay={Math.min(400, index * 80)}
+                        data-aos-delay={Math.min(350, index * 80)}
                       >
                         {/* Header */}
                         <div className="bg-[#177d3bcc] p-4 text-center">
