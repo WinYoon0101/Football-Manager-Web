@@ -7,16 +7,21 @@ import matchRoutes from "./routes/match.routes";
 import goalRoutes from "./routes/goal.routes";
 import reportRoutes from "./routes/report.routes";
 import seasonRoutes from "./routes/season.routes";
-
+import authRoutes from "./routes/auth.routes";
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  credentials: true,               // Cho phép gửi cookie/token
+  methods: ["GET", "POST", "PUT", "DELETE"]
+}));
 app.use(express.json());
 app.use(morgan("dev"));
 
 app.use("/teams", teamRoutes);
 app.use("/players", playerRoutes);
 app.use("/matches", matchRoutes);
+app.use("/auth", authRoutes);
 // Results are now handled by match routes: /matches/results/*
 app.use("/results", matchRoutes); // Redirect /results to match routes for backward compatibility
 app.use("/goals", goalRoutes);
@@ -28,5 +33,6 @@ console.log("Registered routes:");
 console.log("  GET  /reports/teams/stats");
 console.log("  GET  /reports/players/stats");
 console.log("  GET  /seasons");
+
 
 export default app;
