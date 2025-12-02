@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -25,7 +24,11 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { resultApi, type MatchResult } from "@/lib/api/matches";
-import { reportsAPI, type TeamStats, type PlayerStats } from "@/lib/api/reports";
+import {
+  reportsAPI,
+  type TeamStats,
+  type PlayerStats,
+} from "@/lib/api/reports";
 import { seasonApi, type Season, type SeasonRanking } from "@/lib/api/seasons";
 import { Button } from "../ui/button";
 import {
@@ -52,7 +55,6 @@ export default function ReportsModule() {
   const selectedSeason = seasonOptions.find(
     (season) => season.id === selectedSeasonId
   );
-
 
   // Lấy danh sách mùa giải và thiết lập mặc định
   useEffect(() => {
@@ -156,13 +158,13 @@ export default function ReportsModule() {
       switch (activeTab) {
         case "teams":
           data = filteredTeamStats.map((stat, index) => ({
-            "STT": index + 1,
+            STT: index + 1,
             "Đội bóng": stat.team.name,
             "Sân nhà": stat.team.homeStadium || "",
             "Số trận": stat.totalMatches,
-            "Thắng": stat.wins,
-            "Hòa": stat.draws,
-            "Thua": stat.losses,
+            Thắng: stat.wins,
+            Hòa: stat.draws,
+            Thua: stat.losses,
             "Bàn thắng": stat.goalsFor,
             "Bàn thua": stat.goalsAgainst,
             "Hiệu số": stat.goalsFor - stat.goalsAgainst,
@@ -184,7 +186,7 @@ export default function ReportsModule() {
               );
             })
             .map((stat, index) => ({
-              "Hạng": index + 1,
+              Hạng: index + 1,
               "Cầu thủ": stat.player.name,
               "Đội bóng": stat.team.name,
               "Số trận": stat.matches,
@@ -197,13 +199,16 @@ export default function ReportsModule() {
         case "matches":
           data = filteredResults.map((result) => ({
             "Vòng đấu": result.match.round.name,
-            "Thời gian": new Date(result.match.matchTime).toLocaleString("vi-VN", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
+            "Thời gian": new Date(result.match.matchTime).toLocaleString(
+              "vi-VN",
+              {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              }
+            ),
             "Đội 1": result.match.team1.name,
             "Đội 2": result.match.team2.name,
             "Tỷ số": `${result.team1Goals} - ${result.team2Goals}`,
@@ -215,14 +220,14 @@ export default function ReportsModule() {
 
         case "standings":
           data = sortedRankings.map((entry, index) => ({
-            "Hạng": index + 1,
+            Hạng: index + 1,
             "Đội bóng": entry.team.name,
             "Số trận": entry.win + entry.draw + entry.lose,
-            "Thắng": entry.win,
-            "Hòa": entry.draw,
-            "Thua": entry.lose,
+            Thắng: entry.win,
+            Hòa: entry.draw,
+            Thua: entry.lose,
             "Hiệu số": entry.goalDifference,
-            "Điểm": entry.points,
+            Điểm: entry.points,
           }));
           fileName = `Bang_xep_hang${seasonSuffix}.xlsx`;
           sheetName = "Bảng xếp hạng";
@@ -251,26 +256,26 @@ export default function ReportsModule() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
   }
 
   return (
     <>
-      <Card className="shadow-sm border rounded-xl">
+      <Card className="bg-white/5 border border-white/10 text-white backdrop-blur-md shadow-sm rounded-xl">
         <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <CardTitle className="text-2xl font-bold tracking-tight">
+            <CardTitle className="text-2xl font-bold tracking-tight text-white">
               Báo cáo
             </CardTitle>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-white/70 text-sm">
               Báo cáo kết quả trận đấu và phân tích số liệu
             </p>
           </div>
           <Button
             size="sm"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-[#3872ec] hover:bg-[#2f5fc3] text-white border border-white/10"
             onClick={exportToExcel}
           >
             <ChartGantt size={16} />
@@ -281,8 +286,8 @@ export default function ReportsModule() {
         <CardContent className="space-y-4">
           {seasonOptions.length > 0 && (
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-2 text-sm font-medium text-white/80">
+                <Calendar className="h-4 w-4 text-white/60" />
                 <span>Mùa giải</span>
               </div>
               <Select
@@ -292,7 +297,7 @@ export default function ReportsModule() {
                   setSelectedSeasonId(Number(value));
                 }}
               >
-                <SelectTrigger className="w-[220px]">
+                <SelectTrigger className="w-[220px] bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Chọn mùa giải" />
                 </SelectTrigger>
                 <SelectContent>
@@ -307,13 +312,13 @@ export default function ReportsModule() {
           )}
 
           {/* Tabs */}
-          <div className="flex gap-2 border-b overflow-x-auto">
+          <div className="flex gap-2 border-b border-white/20 overflow-x-auto">
             <button
               onClick={() => setActiveTab("teams")}
               className={`px-4 py-2 font-medium transition whitespace-nowrap ${
                 activeTab === "teams"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-b-2 border-blue-400 text-white"
+                  : "text-white/70 hover:text-white"
               }`}
             >
               <Users className="inline h-4 w-4 mr-2" />
@@ -323,8 +328,8 @@ export default function ReportsModule() {
               onClick={() => setActiveTab("players")}
               className={`px-4 py-2 font-medium transition whitespace-nowrap ${
                 activeTab === "players"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-b-2 border-blue-400 text-white"
+                  : "text-white/70 hover:text-white"
               }`}
             >
               <User className="inline h-4 w-4 mr-2" />
@@ -334,8 +339,8 @@ export default function ReportsModule() {
               onClick={() => setActiveTab("matches")}
               className={`px-4 py-2 font-medium transition whitespace-nowrap ${
                 activeTab === "matches"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-b-2 border-blue-400 text-white"
+                  : "text-white/70 hover:text-white"
               }`}
             >
               <Calendar className="inline h-4 w-4 mr-2" />
@@ -345,8 +350,8 @@ export default function ReportsModule() {
               onClick={() => setActiveTab("standings")}
               className={`px-4 py-2 font-medium transition whitespace-nowrap ${
                 activeTab === "standings"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-b-2 border-blue-400 text-white"
+                  : "text-white/70 hover:text-white"
               }`}
             >
               <Trophy className="inline h-4 w-4 mr-2" />
@@ -359,9 +364,9 @@ export default function ReportsModule() {
             activeTab === "players" ||
             activeTab === "matches") && (
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
               <Input
-                className="pl-10"
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60"
                 placeholder={
                   activeTab === "teams"
                     ? "Tìm kiếm theo tên đội..."
@@ -377,21 +382,43 @@ export default function ReportsModule() {
 
           {/* Team Statistics Tab */}
           {activeTab === "teams" && (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border border-white/20 rounded-lg overflow-hidden bg-white/5">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-white/10 border-b border-white/20">
                   <tr>
-                    <th className="p-4 text-left font-semibold">Đội bóng</th>
-                    <th className="p-4 text-center font-semibold">Trận</th>
-                    <th className="p-4 text-center font-semibold">Thắng</th>
-                    <th className="p-4 text-center font-semibold">Hòa</th>
-                    <th className="p-4 text-center font-semibold">Thua</th>
-                    <th className="p-4 text-center font-semibold">BT</th>
-                    <th className="p-4 text-center font-semibold">BB</th>
-                    <th className="p-4 text-center font-semibold">HS</th>
-                    <th className="p-4 text-center font-semibold">Cầu thủ</th>
-                    <th className="p-4 text-center font-semibold">Trong nước</th>
-                    <th className="p-4 text-center font-semibold">Nước ngoài</th>
+                    <th className="p-4 text-left font-semibold text-white">
+                      Đội bóng
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Trận
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Thắng
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Hòa
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Thua
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      BT
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      BB
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      HS
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Cầu thủ
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Trong nước
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Nước ngoài
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -399,7 +426,7 @@ export default function ReportsModule() {
                     <tr>
                       <td
                         colSpan={11}
-                        className="text-center p-6 text-muted-foreground"
+                        className="text-center p-6 text-white/60"
                       >
                         Không có dữ liệu thống kê đội bóng.
                       </td>
@@ -408,7 +435,7 @@ export default function ReportsModule() {
                     filteredTeamStats.map((stat) => (
                       <tr
                         key={stat.team.id}
-                        className="border-b hover:bg-gray-50 transition"
+                        className="border-b border-white/20 hover:bg-white/10 transition"
                       >
                         <td className="p-4">
                           <div className="flex items-center gap-3">
@@ -419,37 +446,51 @@ export default function ReportsModule() {
                                 alt={stat.team.name}
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm">
+                              <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-sm text-white/60">
                                 ?
                               </div>
                             )}
                             <div>
-                              <span className="font-medium">{stat.team.name}</span>
-                              <p className="text-xs text-muted-foreground">
+                              <span className="font-medium text-white">
+                                {stat.team.name}
+                              </span>
+                              <p className="text-xs text-white/60">
                                 {stat.team.homeStadium}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 text-center">{stat.totalMatches}</td>
-                        <td className="p-4 text-center text-green-600 font-medium">
+                        <td className="p-4 text-center text-white/80">
+                          {stat.totalMatches}
+                        </td>
+                        <td className="p-4 text-center text-green-400 font-medium">
                           {stat.wins}
                         </td>
-                        <td className="p-4 text-center text-yellow-600 font-medium">
+                        <td className="p-4 text-center text-yellow-400 font-medium">
                           {stat.draws}
                         </td>
-                        <td className="p-4 text-center text-red-600 font-medium">
+                        <td className="p-4 text-center text-red-400 font-medium">
                           {stat.losses}
                         </td>
-                        <td className="p-4 text-center">{stat.goalsFor}</td>
-                        <td className="p-4 text-center">{stat.goalsAgainst}</td>
-                        <td className="p-4 text-center">
+                        <td className="p-4 text-center text-white/80">
+                          {stat.goalsFor}
+                        </td>
+                        <td className="p-4 text-center text-white/80">
+                          {stat.goalsAgainst}
+                        </td>
+                        <td className="p-4 text-center text-white/80">
                           {stat.goalsFor - stat.goalsAgainst > 0 ? "+" : ""}
                           {stat.goalsFor - stat.goalsAgainst}
                         </td>
-                        <td className="p-4 text-center">{stat.totalPlayers}</td>
-                        <td className="p-4 text-center">{stat.domesticPlayers}</td>
-                        <td className="p-4 text-center">{stat.foreignPlayers}</td>
+                        <td className="p-4 text-center text-white/80">
+                          {stat.totalPlayers}
+                        </td>
+                        <td className="p-4 text-center text-white/80">
+                          {stat.domesticPlayers}
+                        </td>
+                        <td className="p-4 text-center text-white/80">
+                          {stat.foreignPlayers}
+                        </td>
                       </tr>
                     ))
                   )}
@@ -460,15 +501,23 @@ export default function ReportsModule() {
 
           {/* Player Statistics Tab */}
           {activeTab === "players" && (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border border-white/20 rounded-lg overflow-hidden bg-white/5">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-white/10 border-b border-white/20">
                   <tr>
-                    <th className="p-4 text-center font-semibold w-16">Hạng</th>
-                    <th className="p-4 text-left font-semibold">Cầu thủ</th>
-                    <th className="p-4 text-left font-semibold">Đội bóng</th>
-                    <th className="p-4 text-center font-semibold">Trận</th>
-                    <th className="p-4 text-center font-semibold">
+                    <th className="p-4 text-center font-semibold w-16 text-white">
+                      Hạng
+                    </th>
+                    <th className="p-4 text-left font-semibold text-white">
+                      Cầu thủ
+                    </th>
+                    <th className="p-4 text-left font-semibold text-white">
+                      Đội bóng
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Trận
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
                       <Target className="inline h-4 w-4 mr-1" />
                       Bàn thắng
                     </th>
@@ -477,10 +526,7 @@ export default function ReportsModule() {
                 <tbody>
                   {filteredPlayerStats.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={5}
-                        className="text-center p-6 text-muted-foreground"
-                      >
+                      <td colSpan={5} className="text-center p-6 text-white/60">
                         Không có dữ liệu thống kê cầu thủ.
                       </td>
                     </tr>
@@ -496,11 +542,11 @@ export default function ReportsModule() {
                       .map((stat, index) => (
                         <tr
                           key={stat.player.id}
-                          className={`border-b hover:bg-gray-50 transition ${
-                            index < 3 ? "bg-yellow-50" : ""
+                          className={`border-b border-white/20 hover:bg-white/10 transition ${
+                            index < 3 ? "bg-yellow-500/20" : ""
                           }`}
                         >
-                          <td className="p-4 text-center font-bold">
+                          <td className="p-4 text-center font-bold text-white">
                             {index + 1}
                           </td>
                           <td className="p-4">
@@ -521,7 +567,9 @@ export default function ReportsModule() {
                                     .toUpperCase()}
                                 </div>
                               )}
-                              <span className="font-medium">{stat.player.name}</span>
+                              <span className="font-medium text-white">
+                                {stat.player.name}
+                              </span>
                             </div>
                           </td>
                           <td className="p-4">
@@ -533,15 +581,19 @@ export default function ReportsModule() {
                                   alt={stat.team.name}
                                 />
                               ) : (
-                                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">
+                                <div className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs text-white/60">
                                   ?
                                 </div>
                               )}
-                              <span className="text-sm">{stat.team.name}</span>
+                              <span className="text-sm text-white/80">
+                                {stat.team.name}
+                              </span>
                             </div>
                           </td>
-                          <td className="p-4 text-center">{stat.matches}</td>
-                          <td className="p-4 text-center font-bold text-lg text-green-600">
+                          <td className="p-4 text-center text-white/80">
+                            {stat.matches}
+                          </td>
+                          <td className="p-4 text-center font-bold text-lg text-green-400">
                             {stat.goals}
                           </td>
                         </tr>
@@ -554,25 +606,32 @@ export default function ReportsModule() {
 
           {/* Match Results Table */}
           {activeTab === "matches" && (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border border-white/20 rounded-lg overflow-hidden bg-white/5">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-white/10 border-b border-white/20">
                   <tr>
-                    <th className="p-4 text-left font-semibold">Vòng đấu</th>
-                    <th className="p-4 text-left font-semibold">Thời gian</th>
-                    <th className="p-4 text-center font-semibold">Trận đấu</th>
-                    <th className="p-4 text-center font-semibold">Tỷ số</th>
-                    <th className="p-4 text-left font-semibold">Sân vận động</th>
-                    <th className="p-4 text-center font-semibold w-20"></th>
+                    <th className="p-4 text-left font-semibold text-white">
+                      Vòng đấu
+                    </th>
+                    <th className="p-4 text-left font-semibold text-white">
+                      Thời gian
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Trận đấu
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Tỷ số
+                    </th>
+                    <th className="p-4 text-left font-semibold text-white">
+                      Sân vận động
+                    </th>
+                    <th className="p-4 text-center font-semibold w-20 text-white"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredResults.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="text-center p-6 text-muted-foreground"
-                      >
+                      <td colSpan={6} className="text-center p-6 text-white/60">
                         Không có kết quả trận đấu nào.
                       </td>
                     </tr>
@@ -580,22 +639,27 @@ export default function ReportsModule() {
                     filteredResults.map((result) => (
                       <tr
                         key={result.matchId}
-                        className="border-b hover:bg-gray-50 transition"
+                        className="border-b border-white/20 hover:bg-white/10 transition"
                       >
-                        <td className="p-4">{result.match.round.name}</td>
-                        <td className="p-4">
-                          {new Date(result.match.matchTime).toLocaleString("vi-VN", {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                        <td className="p-4 text-white/80">
+                          {result.match.round.name}
+                        </td>
+                        <td className="p-4 text-white/80">
+                          {new Date(result.match.matchTime).toLocaleString(
+                            "vi-VN",
+                            {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
                         </td>
                         <td className="p-4">
                           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                             <div className="flex items-center justify-end gap-2">
-                              <span className="font-medium">
+                              <span className="font-medium text-white">
                                 {result.match.team1.name}
                               </span>
                               {result.match.team1.image ? (
@@ -605,12 +669,12 @@ export default function ReportsModule() {
                                   alt={result.match.team1.name}
                                 />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs">
+                                <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs text-white/60">
                                   ?
                                 </div>
                               )}
                             </div>
-                            <span className="text-muted-foreground text-center px-2">
+                            <span className="text-white/60 text-center px-2">
                               vs
                             </span>
                             <div className="flex items-center gap-2">
@@ -621,30 +685,32 @@ export default function ReportsModule() {
                                   alt={result.match.team2.name}
                                 />
                               ) : (
-                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs">
+                                <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs text-white/60">
                                   ?
                                 </div>
                               )}
-                              <span className="font-medium">
+                              <span className="font-medium text-white">
                                 {result.match.team2.name}
                               </span>
                             </div>
                           </div>
                         </td>
                         <td className="p-4 text-center">
-                          <span className="font-bold text-lg">
+                          <span className="font-bold text-lg text-white">
                             {result.team1Goals} - {result.team2Goals}
                           </span>
                         </td>
-                        <td className="p-4 text-muted-foreground">
+                        <td className="p-4 text-white/60">
                           {result.match.stadium || "—"}
                         </td>
                         <td className="p-4 text-center">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => router.push(`/match/${result.match.id}`)}
-                            className="h-8 w-8"
+                            onClick={() =>
+                              router.push(`/match/${result.match.id}`)
+                            }
+                            className="h-8 w-8 text-white hover:bg-white/20"
                             title="Xem chi tiết"
                           >
                             <Eye className="h-4 w-4" />
@@ -660,27 +726,40 @@ export default function ReportsModule() {
 
           {/* Standings Table */}
           {activeTab === "standings" && (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border border-white/20 rounded-lg overflow-hidden bg-white/5">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-white/10 border-b border-white/20">
                   <tr>
-                    <th className="p-4 text-center font-semibold w-16">Hạng</th>
-                    <th className="p-4 text-left font-semibold">Đội bóng</th>
-                    <th className="p-4 text-center font-semibold">Trận</th>
-                    <th className="p-4 text-center font-semibold">Thắng</th>
-                    <th className="p-4 text-center font-semibold">Hòa</th>
-                    <th className="p-4 text-center font-semibold">Thua</th>
-                    <th className="p-4 text-center font-semibold">HS</th>
-                    <th className="p-4 text-center font-semibold">Điểm</th>
+                    <th className="p-4 text-center font-semibold w-16 text-white">
+                      Hạng
+                    </th>
+                    <th className="p-4 text-left font-semibold text-white">
+                      Đội bóng
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Trận
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Thắng
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Hòa
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Thua
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      HS
+                    </th>
+                    <th className="p-4 text-center font-semibold text-white">
+                      Điểm
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedRankings.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={8}
-                        className="text-center p-6 text-muted-foreground"
-                      >
+                      <td colSpan={8} className="text-center p-6 text-white/60">
                         Chưa có dữ liệu bảng xếp hạng.
                       </td>
                     </tr>
@@ -690,11 +769,11 @@ export default function ReportsModule() {
                       return (
                         <tr
                           key={`${entry.team.id}-${entry.id}`}
-                          className={`border-b hover:bg-gray-50 transition ${
-                            index < 3 ? "bg-yellow-50" : ""
+                          className={`border-b border-white/20 hover:bg-white/10 transition ${
+                            index < 3 ? "bg-yellow-500/20" : ""
                           }`}
                         >
-                          <td className="p-4 text-center font-bold">
+                          <td className="p-4 text-center font-bold text-white">
                             {index + 1}
                           </td>
                           <td className="p-4">
@@ -706,30 +785,32 @@ export default function ReportsModule() {
                                   alt={entry.team.name}
                                 />
                               ) : (
-                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm">
+                                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-sm text-white/60">
                                   ?
                                 </div>
                               )}
-                              <span className="font-medium">
+                              <span className="font-medium text-white">
                                 {entry.team.name}
                               </span>
                             </div>
                           </td>
-                          <td className="p-4 text-center">{played}</td>
-                          <td className="p-4 text-center text-green-600 font-medium">
+                          <td className="p-4 text-center text-white/80">
+                            {played}
+                          </td>
+                          <td className="p-4 text-center text-green-400 font-medium">
                             {entry.win}
                           </td>
-                          <td className="p-4 text-center text-yellow-600 font-medium">
+                          <td className="p-4 text-center text-yellow-400 font-medium">
                             {entry.draw}
                           </td>
-                          <td className="p-4 text-center text-red-600 font-medium">
+                          <td className="p-4 text-center text-red-400 font-medium">
                             {entry.lose}
                           </td>
-                          <td className="p-4 text-center">
+                          <td className="p-4 text-center text-white/80">
                             {entry.goalDifference > 0 ? "+" : ""}
                             {entry.goalDifference}
                           </td>
-                          <td className="p-4 text-center font-bold text-lg">
+                          <td className="p-4 text-center font-bold text-lg text-white">
                             {entry.points}
                           </td>
                         </tr>
@@ -745,4 +826,3 @@ export default function ReportsModule() {
     </>
   );
 }
-

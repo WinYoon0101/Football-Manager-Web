@@ -31,6 +31,11 @@ import {
   Clock,
 } from "lucide-react";
 import { matchApi, resultApi, goalApi } from "@/lib/api/matches";
+import {
+  parametersAPI,
+  Parameter,
+  UpdateParameterRequest,
+} from "@/lib/api/parameters";
 import { api } from "@/lib/api/axios";
 import type { Match, MatchResult, Player, GoalType } from "@/lib/types";
 import { toast } from "react-toastify";
@@ -57,6 +62,7 @@ export default function MatchUpdatePage() {
   const [staticDataLoading, setStaticDataLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [addingGoal, setAddingGoal] = useState(false);
+  const [parameter, setParameter] = useState<Parameter | null>(null);
 
   // Form states
   const [matchTime, setMatchTime] = useState("");
@@ -82,6 +88,20 @@ export default function MatchUpdatePage() {
       AOS.refresh();
     }
   }, [loading]);
+
+  useEffect(() => {
+    const fetchParameter = async () => {
+      try {
+        const parameter = await parametersAPI.getById(1);
+        console.log("parameter", parameter);
+        setParameter(parameter);
+      } catch (error) {
+        console.error("Error fetching parameter:", error);
+        toast.error("Không thể tải thông tin tham số");
+      }
+    };
+    fetchParameter();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -207,8 +227,15 @@ export default function MatchUpdatePage() {
       return;
     }
 
-    if (Number(goalForm.minute) < 0 || Number(goalForm.minute) > 90) {
-      toast.error("Phút ghi bàn phải từ 0 đến 120");
+    if (
+      Number(goalForm.minute) < (parameter?.minGoalMinute ?? 0) ||
+      Number(goalForm.minute) > (parameter?.maxGoalMinute ?? 90)
+    ) {
+      toast.error(
+        `Phút ghi bàn phải từ ${Number(
+          parameter?.minGoalMinute ?? 0
+        ).toString()} đến ${Number(parameter?.maxGoalMinute ?? 90).toString()}`
+      );
       return;
     }
 
@@ -657,8 +684,16 @@ export default function MatchUpdatePage() {
                   <Label className="text-white/80">Phút ghi bàn</Label>
                   <Input
                     type="number"
-                    min="0"
-                    max="120"
+                    min={
+                      parameter?.minGoalMinute
+                        ? parameter.minGoalMinute.toString()
+                        : "0"
+                    }
+                    max={
+                      parameter?.maxGoalMinute
+                        ? parameter.maxGoalMinute.toString()
+                        : "120"
+                    }
                     value={goalForm.minute}
                     onChange={(e) =>
                       setGoalForm({

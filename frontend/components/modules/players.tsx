@@ -4,7 +4,14 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, MoreVertical, Pencil, Trash2, Loader2 } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 import { toast } from "react-toastify";
 
 import {
@@ -183,7 +190,9 @@ export default function PlayersModule() {
       toast.success("Cập nhật cầu thủ thành công!");
       setEditOpen(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Không thể cập nhật cầu thủ");
+      toast.error(
+        error.response?.data?.message || "Không thể cập nhật cầu thủ"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -193,36 +202,37 @@ export default function PlayersModule() {
 
   const filtered = players.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchTeam =
-      teamFilter === "all" ? true : p.team?.name === teamFilter;
+    const matchTeam = teamFilter === "all" ? true : p.team?.name === teamFilter;
     const matchType =
-      typeFilter === "all"
-        ? true
-        : p.playerType?.name === typeFilter;
+      typeFilter === "all" ? true : p.playerType?.name === typeFilter;
     return matchSearch && matchTeam && matchType;
   });
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
   }
 
   return (
     <>
-      <Card className="shadow-sm border rounded-xl">
+      <Card className="bg-white/5 border border-white/10 text-white backdrop-blur-md shadow-sm rounded-xl">
         <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <CardTitle className="text-2xl font-bold tracking-tight">
+            <CardTitle className="text-2xl font-bold tracking-tight text-white">
               Quản lý cầu thủ
             </CardTitle>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-white/70 text-sm">
               Danh sách cầu thủ trong hệ thống
             </p>
           </div>
-          <Button size="sm" className="flex items-center gap-2" onClick={() => setOpenAdd(true)}>
+          <Button
+            size="sm"
+            className="flex items-center gap-2 bg-[#3872ec] hover:bg-[#2f5fc3] text-white border border-white/10"
+            onClick={() => setOpenAdd(true)}
+          >
             <Plus size={16} />
             Thêm cầu thủ
           </Button>
@@ -230,14 +240,13 @@ export default function PlayersModule() {
 
         <CardContent className="space-y-5">
           {/* Filters Section */}
-          <div className="bg-muted/30 p-4 rounded-lg border flex flex-col md:flex-row gap-4 items-center">
-            
+          <div className="bg-white/10 border border-white/20 p-4 rounded-lg flex flex-col md:flex-row gap-4 items-center">
             {/* Search */}
             <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
               <Input
                 placeholder="Tìm kiếm cầu thủ..."
-                className="pl-10 rounded-full"
+                className="pl-10 rounded-full bg-white/10 border-white/20 text-white placeholder:text-white/60"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -245,7 +254,7 @@ export default function PlayersModule() {
 
             {/* Team Filter */}
             <Select value={teamFilter} onValueChange={setTeamFilter}>
-              <SelectTrigger className="w-full md:w-48 rounded-full">
+              <SelectTrigger className="w-full md:w-48 rounded-full bg-white/10 border-white/20 text-white">
                 <SelectValue placeholder="Lọc theo đội" />
               </SelectTrigger>
               <SelectContent>
@@ -260,7 +269,7 @@ export default function PlayersModule() {
 
             {/* Type Filter */}
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full md:w-48 rounded-full">
+              <SelectTrigger className="w-full md:w-48 rounded-full bg-white/10 border-white/20 text-white">
                 <SelectValue placeholder="Loại cầu thủ" />
               </SelectTrigger>
               <SelectContent>
@@ -272,120 +281,112 @@ export default function PlayersModule() {
           </div>
 
           {/* Table */}
-      
-<div className="overflow-x-auto border rounded-xl">
-  <table className="w-full text-sm table-fixed">
-    
-    {/* HEADER */}
-    <thead className="bg-gray-100 text-gray-700">
-      <tr className="grid grid-cols-[0.5fr,1fr,2.5fr,1.4fr,1.2fr,0.5fr] h-12 items-center px-4 font-semibold">
-        <th className="text-center"></th>
-        <th className="text-left">Cầu thủ</th>
-        <th className="text-center">Ngày sinh</th>
-        <th className="text-left">Đội bóng</th>
-        <th className="text-center">Loại cầu thủ</th>
-        <th className="text-center"></th>
-      </tr>
-    </thead>
 
-    {/* BODY */}
-    <tbody>
-      {filtered.length === 0 ? (
-        <tr>
-          <td colSpan={6} className="text-center p-6 text-gray-500">
-            Không tìm thấy cầu thủ nào.
-          </td>
-        </tr>
-      ) : (
-        filtered.map((p, index) => (
-          <tr
-            key={p.id}
-            className={`grid grid-cols-[0.5fr,1fr,2.5fr,1.4fr,1.2fr,0.5fr] items-center px-4 h-16
-            ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}
-            border-t hover:bg-gray-100 transition`}
-          >
-            {/* Avatar */}
-            <td className="flex justify-center">
-              {p.image ? (
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="w-10 h-10 rounded-full object-cover shadow-sm"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
-                  {getInitials(p.name)}
-                </div>
-              )}
-            </td>
+          <div className="overflow-x-auto border border-white/20 rounded-xl">
+            <table className="w-full text-sm table-fixed">
+              {/* HEADER */}
+              <thead className="bg-white/10 border-b border-white/20">
+                <tr className="grid grid-cols-[0.5fr,1fr,2.5fr,1.4fr,1.2fr,0.5fr] h-12 items-center px-4 font-semibold">
+                  <th className="text-center text-white"></th>
+                  <th className="text-left text-white">Cầu thủ</th>
+                  <th className="text-center text-white">Ngày sinh</th>
+                  <th className="text-left text-white">Đội bóng</th>
+                  <th className="text-center text-white">Loại cầu thủ</th>
+                  <th className="text-center text-white"></th>
+                </tr>
+              </thead>
 
-            {/* Name */}
-            <td className="text-gray-900 font-medium">
-              {p.name}
-            </td>
+              {/* BODY */}
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center p-6 text-white/60">
+                      Không tìm thấy cầu thủ nào.
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((p, index) => (
+                    <tr
+                      key={p.id}
+                      className={`grid grid-cols-[0.5fr,1fr,2.5fr,1.4fr,1.2fr,0.5fr] items-center px-4 h-16
+            ${index % 2 === 0 ? "bg-white/5" : "bg-white/10"}
+            border-t border-white/20 hover:bg-white/15 transition`}
+                    >
+                      {/* Avatar */}
+                      <td className="flex justify-center">
+                        {p.image ? (
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            className="w-10 h-10 rounded-full object-cover shadow-sm"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
+                            {getInitials(p.name)}
+                          </div>
+                        )}
+                      </td>
 
-            {/* Birthdate */}
-            <td className="text-center text-gray-700">
-              {p.birthDate
-                ? new Date(p.birthDate).toLocaleDateString("vi-VN")
-                : "—"}
-            </td>
+                      {/* Name */}
+                      <td className="text-white font-medium">{p.name}</td>
 
-            {/* Team */}
-            <td className="text-left text-gray-800">
-              {p.team?.name || "—"}
-            </td>
+                      {/* Birthdate */}
+                      <td className="text-center text-white/80">
+                        {p.birthDate
+                          ? new Date(p.birthDate).toLocaleDateString("vi-VN")
+                          : "—"}
+                      </td>
 
-            {/* Type */}
-            <td className="text-center">
-              {p.playerType?.name === "domestic"
-                ? "Trong nước"
-                : p.playerType?.name === "foreign"
-                ? "Nước ngoài"
-                : p.playerType?.name || "—"}
-            </td>
+                      {/* Team */}
+                      <td className="text-left text-white/80">
+                        {p.team?.name || "—"}
+                      </td>
 
-            {/* Actions */}
-            <td className="flex justify-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:bg-gray-200 rounded-md"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
+                      {/* Type */}
+                      <td className="text-center text-white/80">
+                        {p.playerType?.name === "domestic"
+                          ? "Trong nước"
+                          : p.playerType?.name === "foreign"
+                          ? "Nước ngoài"
+                          : p.playerType?.name || "—"}
+                      </td>
 
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleEdit(p)}>
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Chỉnh sửa
-                  </DropdownMenuItem>
+                      {/* Actions */}
+                      <td className="flex justify-center">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="hover:bg-white/20 rounded-md text-white"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
 
-                  <DropdownMenuItem
-                    className="text-red-600"
-                    onClick={() => handleDelete(p)}
-                    disabled={isSubmitting}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2 text-red-600" />
-                    Xóa
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </td>
-          </tr>
-        ))
-      )}
-    </tbody>
-  </table>
-</div>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(p)}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Chỉnh sửa
+                            </DropdownMenuItem>
 
-
-
-
-
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleDelete(p)}
+                              disabled={isSubmitting}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2 text-red-600" />
+                              Xóa
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 
