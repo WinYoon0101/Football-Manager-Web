@@ -228,14 +228,16 @@ export default function TeamsModule() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-2xl font-bold">{selectedTeam.name}</h3>
-            <p className="text-muted-foreground">{selectedTeam.homeStadium}</p>
+            <h3 className="text-2xl font-bold text-white">
+              {selectedTeam.name}
+            </h3>
+            <p className="text-white/70">{selectedTeam.homeStadium}</p>
           </div>
 
           <Button
             variant="outline"
             onClick={() => setShowDetail(false)}
-            className="gap-2"
+            className="gap-2 border-white/20 text-white hover:bg-white/10"
           >
             <ArrowLeft className="h-4 w-4" />
             Quay Lại
@@ -244,9 +246,9 @@ export default function TeamsModule() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card thông tin đội */}
-          <Card>
+          <Card className="bg-white/5 border border-white/10 text-white backdrop-blur-md">
             <CardHeader>
-              <CardTitle>Thông Tin Đội</CardTitle>
+              <CardTitle className="text-white">Thông Tin Đội</CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-4">
@@ -258,27 +260,27 @@ export default function TeamsModule() {
                     className="w-26 h-26 rounded-lg object-cover shadow-sm border"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-lg border flex items-center justify-center text-muted-foreground">
+                  <div className="w-24 h-24 rounded-lg border border-white/20 flex items-center justify-center text-white/60">
                     Không có logo
                   </div>
                 )}
               </div>
 
               <div>
-                <span className="text-sm text-muted-foreground">Tên đội:</span>
-                <p className="font-semibold">{selectedTeam.name}</p>
+                <span className="text-sm text-white/70">Tên đội:</span>
+                <p className="font-semibold text-white">{selectedTeam.name}</p>
               </div>
 
               <div>
-                <span className="text-sm text-muted-foreground">Sân nhà:</span>
-                <p className="font-semibold">{selectedTeam.homeStadium}</p>
+                <span className="text-sm text-white/70">Sân nhà:</span>
+                <p className="font-semibold text-white">
+                  {selectedTeam.homeStadium}
+                </p>
               </div>
 
               <div>
-                <span className="text-sm text-muted-foreground">
-                  Số cầu thủ:
-                </span>
-                <p className="font-semibold">
+                <span className="text-sm text-white/70">Số cầu thủ:</span>
+                <p className="font-semibold text-white">
                   {selectedTeam.players?.length ?? 0}
                 </p>
               </div>
@@ -286,14 +288,14 @@ export default function TeamsModule() {
           </Card>
 
           {/* Card danh sách cầu thủ */}
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 bg-white/5 border border-white/10 text-white backdrop-blur-md">
             <CardHeader>
-              <CardTitle>Danh sách cầu thủ</CardTitle>
+              <CardTitle className="text-white">Danh sách cầu thủ</CardTitle>
             </CardHeader>
 
             <CardContent>
               {(selectedTeam.players?.length ?? 0) === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
+                <p className="text-white/60 text-center py-4">
                   Chưa có cầu thủ nào
                 </p>
               ) : (
@@ -301,15 +303,15 @@ export default function TeamsModule() {
                   {(selectedTeam.players ?? []).map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition"
                     >
                       <div className="flex items-center gap-3">
                         {/* Avatar player nếu sau này muốn thêm */}
                         {/* <img src={p.avatar} className="w-10 h-10 rounded-full object-cover" /> */}
 
                         <div>
-                          <p className="font-semibold">{p.name}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-semibold text-white">{p.name}</p>
+                          <p className="text-xs text-white/60">
                             {p.playerTypeId === 1 ? "Trong nước" : "Nước ngoài"}
                           </p>
                         </div>
@@ -332,24 +334,26 @@ export default function TeamsModule() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-white/5 border border-white/10 text-white backdrop-blur-md">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh Sách Đội Bóng</CardTitle>
-              <CardDescription>Quản lý các đội tham gia giải</CardDescription>
+              <CardTitle className="text-white">Danh Sách Đội Bóng</CardTitle>
+              <CardDescription className="text-white/70">
+                Quản lý các đội tham gia giải
+              </CardDescription>
             </div>
 
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2 bg-[#3872ec] hover:bg-[#2f5fc3] text-white border border-white/10">
                   <Plus className="h-4 w-4" />
                   Thêm đội bóng
                 </Button>
@@ -454,9 +458,9 @@ export default function TeamsModule() {
         <CardContent className="space-y-4">
           {/* SEARCH */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
             <Input
-              className="pl-10"
+              className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60"
               placeholder="Tìm kiếm..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -464,23 +468,21 @@ export default function TeamsModule() {
           </div>
 
           {/* TABLE */}
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border border-white/20 rounded-lg overflow-hidden">
             <table className="w-full table-fixed">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-white/10 border-b border-white/20">
                 <tr>
-                  <th className="p-4 text-left font-semibold w-[90px]"></th>
-                  <th className="p-4 text-left font-semibold w-[200px]">
+                  <th className="p-4 text-left font-semibold text-white w-[90px]"></th>
+                  <th className="p-4 text-left font-semibold text-white w-[200px]">
                     Tên đội
                   </th>
-                  <th className="p-4 text-left font-semibold w-[180px]">
+                  <th className="p-4 text-left font-semibold text-white w-[180px]">
                     Sân nhà
                   </th>
-                  <th className="p-4 text-left font-semibold w-[120px]">
+                  <th className="p-4 text-left font-semibold text-white w-[120px]">
                     Số cầu thủ
                   </th>
-                  <th className="p-4 text-right font-semibold w-[80px]">
-                   
-                  </th>
+                  <th className="p-4 text-right font-semibold text-white w-[80px]"></th>
                 </tr>
               </thead>
 
@@ -489,7 +491,7 @@ export default function TeamsModule() {
                   <tr
                     key={team.id}
                     onClick={() => handleViewDetail(team)}
-                    className="border-b hover:bg-gray-50 transition cursor-pointer"
+                    className="border-b border-white/20 hover:bg-white/10 transition cursor-pointer"
                   >
                     <td className="p-4">
                       {team.image ? (
@@ -498,21 +500,21 @@ export default function TeamsModule() {
                           className="w-12 h-12 rounded-full object-cover shadow shrink-0"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">
+                        <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-sm text-white/60">
                           ?
                         </div>
                       )}
                     </td>
 
-                    <td className="p-4 font-medium whitespace-nowrap">
+                    <td className="p-4 font-medium text-white whitespace-nowrap">
                       {team.name}
                     </td>
 
-                    <td className="p-4 whitespace-nowrap">
+                    <td className="p-4 text-white/80 whitespace-nowrap">
                       {team.homeStadium}
                     </td>
 
-                    <td className="p-4 text-muted-foreground whitespace-nowrap">
+                    <td className="p-4 text-white/70 whitespace-nowrap">
                       {team.players?.length ?? 0}
                     </td>
 

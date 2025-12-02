@@ -100,9 +100,7 @@ export default function SeasonsModule() {
 
     return (
       s.name.toLowerCase().includes(filterName.toLowerCase()) &&
-      (filterStatus === "" ||
-        filterStatus === "all" ||
-        filterStatus === status)
+      (filterStatus === "" || filterStatus === "all" || filterStatus === status)
     );
   });
 
@@ -132,22 +130,25 @@ export default function SeasonsModule() {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen text-gray-900">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">
-        Danh Sách Mùa Giải
-      </h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold mb-2 text-white">
+          Danh Sách Mùa Giải
+        </h1>
+        <p className="text-white/70">Quản lý các mùa giải trong hệ thống</p>
+      </div>
 
       {/* FILTERS */}
       <div className="flex gap-4 items-center mb-8">
         <Input
           placeholder="Tên mùa giải"
-          className="w-64 shadow-sm"
+          className="w-64 shadow-sm bg-white/10 border-white/20 text-white placeholder:text-white/60"
           value={filterName}
           onChange={(e) => setFilterName(e.target.value)}
         />
 
         <Select onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-48 shadow-sm">
+          <SelectTrigger className="w-48 shadow-sm bg-white/10 border-white/20 text-white">
             <SelectValue placeholder="Tình Trạng" />
           </SelectTrigger>
           <SelectContent>
@@ -160,7 +161,7 @@ export default function SeasonsModule() {
 
         <div className="ml-auto flex gap-3">
           <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white shadow"
+            className="bg-[#3872ec] hover:bg-[#2f5fc3] text-white border border-white/10 shadow"
             onClick={() => setOpenAdd(true)}
           >
             + Thêm Mùa Giải
@@ -169,38 +170,35 @@ export default function SeasonsModule() {
       </div>
 
       {/* TABLE */}
-      <Card className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <CardHeader className="grid grid-cols-[2fr,1fr,1fr,1fr,0.7fr,0.4fr] px-6 py-4 font-semibold text-sm text-gray-700 bg-gray-100">
-          <div>Tên Mùa Giải</div>
-          <div>Tình Trạng</div>
-          <div>Ngày Bắt Đầu</div>
-          <div>Ngày Kết Thúc</div>
-          <div>Số Đội</div>
-          <div className="text-center">Thao Tác</div>
+      <Card className="bg-white/5 border border-white/10 text-white backdrop-blur-md rounded-xl overflow-hidden">
+        <CardHeader className="grid grid-cols-[2fr,1fr,1fr,1fr,0.7fr,0.4fr] px-6 py-4 font-semibold text-sm bg-white/10 border-b border-white/20">
+          <div className="text-white">Tên Mùa Giải</div>
+          <div className="text-white">Tình Trạng</div>
+          <div className="text-white">Ngày Bắt Đầu</div>
+          <div className="text-white">Ngày Kết Thúc</div>
+          <div className="text-white">Số Đội</div>
+          <div className="text-center text-white">Thao Tác</div>
         </CardHeader>
 
         <CardContent className="px-0">
-          {loading && <p className="p-4 text-gray-500">Đang tải...</p>}
+          {loading && <p className="p-4 text-white/60">Đang tải...</p>}
 
           {!loading &&
             filtered.map((item) => {
-              const status = getSeasonStatus(
-                item.startDate,
-                item.endDate
-              );
+              const status = getSeasonStatus(item.startDate, item.endDate);
 
               return (
                 <div
                   key={item.id}
                   className="grid grid-cols-[2fr,1fr,1fr,1fr,0.7fr,0.4fr] px-6 py-4 items-center text-sm 
-                    hover:bg-gray-50 transition-colors border-b last:border-0"
+                    hover:bg-white/10 transition-colors border-b border-white/20 last:border-0"
                 >
                   <div
-  className="text-blue-700 font-medium hover:underline cursor-pointer"
-  onClick={() => router.push(`/season/${item.id}`)}
->
-  {item.name}
-</div>
+                    className="text-blue-300 font-medium hover:text-blue-200 hover:underline cursor-pointer"
+                    onClick={() => router.push(`/season/${item.id}`)}
+                  >
+                    {item.name}
+                  </div>
 
                   <div>
                     <span
@@ -217,16 +215,20 @@ export default function SeasonsModule() {
                     </span>
                   </div>
 
-                  <div>{item.startDate?.slice(0, 10)}</div>
-                  <div>{item.endDate?.slice(0, 10)}</div>
+                  <div className="text-white/80">
+                    {item.startDate?.slice(0, 10)}
+                  </div>
+                  <div className="text-white/80">
+                    {item.endDate?.slice(0, 10)}
+                  </div>
 
-                  <div className="font-medium text-gray-800">—</div>
+                  <div className="font-medium text-white/80">—</div>
 
                   {/* Dropdown */}
                   <div className="flex justify-center">
                     <DropdownMenu>
                       <DropdownMenuTrigger>
-                        <EllipsisVertical className="w-5 h-5 cursor-pointer text-gray-500 hover:text-gray-700" />
+                        <EllipsisVertical className="w-5 h-5 cursor-pointer text-white/60 hover:text-white" />
                       </DropdownMenuTrigger>
 
                       <DropdownMenuContent>
@@ -273,9 +275,7 @@ export default function SeasonsModule() {
             <Input
               placeholder="Tên mùa giải"
               value={addForm.name}
-              onChange={(e) =>
-                setAddForm({ ...addForm, name: e.target.value })
-              }
+              onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
             />
 
             <div className="grid grid-cols-2 gap-4">

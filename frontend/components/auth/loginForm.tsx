@@ -1,47 +1,45 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation" // 1. Import router để chuyển trang
-import { signIn } from "next-auth/react"    // 2. Import hàm đăng nhập
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import Link from "next/link";
+import { login } from "@/lib/api/auth";
+import { setAuthToken } from "@/lib/utils/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  
-  // 3. Thêm state để lưu dữ liệu nhập và lỗi
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   async function onSubmit(event: React.SyntheticEvent) {
-    event.preventDefault()
-    setIsLoading(true)
-    setError("") // Xóa lỗi cũ nếu có
+    event.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
-      // 4. Gọi NextAuth
-      const res = await signIn("credentials", {
-        email: email,
-        password: password,
-        redirect: false, // Để false để chúng ta tự xử lý chuyển trang
-      })
+      // Gọi API đăng nhập
+      const result = await login({ email, password });
 
-      if (res?.error) {
-        // Nếu thất bại
-        setError("Email hoặc mật khẩu không chính xác")
-        setIsLoading(false)
-      } else {
-        // Nếu thành công
-        router.refresh() // Làm mới để cập nhật session cho server components
-        router.push("/") // Chuyển về trang chủ
+      // Lưu token vào cả localStorage và cookie
+      if (result.token) {
+        setAuthToken(result.token, result.user);
       }
-    } catch (err) {
-      setError("Có lỗi xảy ra, vui lòng thử lại")
-      setIsLoading(false)
+
+      // Reset form
+      setEmail("");
+      setPassword("");
+      setIsLoading(false);
+
+      // Chuyển về trang chủ sau khi lưu token
+      window.location.href = "/";
+    } catch (err: any) {
+      // Xử lý lỗi
+      setError(err.message || "Email hoặc mật khẩu không chính xác");
+      setIsLoading(false);
     }
   }
 
@@ -51,14 +49,16 @@ export function LoginForm() {
         <h1 className="text-3xl font-bold text-slate-900">Đăng Nhập</h1>
         <p className="text-slate-500">
           Chưa có tài khoản?{" "}
-          <Link href="/signup" className="font-medium text-blue-600 hover:underline">
+          <Link
+            href="/signup"
+            className="font-medium text-blue-600 hover:underline"
+          >
             Đăng ký
           </Link>
         </p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        
         {/* 5. Hiển thị thông báo lỗi nếu có */}
         {error && (
           <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
@@ -67,11 +67,13 @@ export function LoginForm() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-slate-700">Email</Label>
-          <Input 
-            id="email" 
-            placeholder="admin@gmail.com" 
-            type="email" 
+          <Label htmlFor="email" className="text-slate-700">
+            Email
+          </Label>
+          <Input
+            id="email"
+            placeholder="admin@gmail.com"
+            type="email"
             // 6. Binding dữ liệu 2 chiều
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -79,17 +81,22 @@ export function LoginForm() {
             className="bg-white border-gray-300 text-slate-900 focus:ring-blue-600 focus:border-blue-600"
           />
         </div>
-        
+
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-slate-700">Mật khẩu</Label>
-            <Link href="/forgot-password" className="text-sm font-medium text-blue-600 hover:underline">
+            <Label htmlFor="password" className="text-slate-700">
+              Mật khẩu
+            </Label>
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
               Quên mật khẩu?
             </Link>
           </div>
-          <Input 
-            id="password" 
-            type="password" 
+          <Input
+            id="password"
+            type="password"
             // 7. Binding dữ liệu 2 chiều
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -98,10 +105,13 @@ export function LoginForm() {
           />
         </div>
 
-        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2" disabled={isLoading}>
+        <Button
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2"
+          disabled={isLoading}
+        >
           {isLoading ? "Đang xử lý..." : "Đăng Nhập"}
         </Button>
       </form>
     </div>
-  )
+  );
 }

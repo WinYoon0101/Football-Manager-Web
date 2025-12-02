@@ -102,6 +102,7 @@ export default function MatchesModule() {
         team2Id: Number(formData.team2Id),
         matchTime: formData.matchTime,
         stadium: formData.stadium || undefined,
+        seasonId: 1,
       });
 
       toast.success("Tạo trận đấu thành công");
@@ -191,8 +192,8 @@ export default function MatchesModule() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải danh sách trận đấu...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+          <p className="mt-4 text-white/70">Đang tải danh sách trận đấu...</p>
         </div>
       </div>
     );
@@ -203,10 +204,13 @@ export default function MatchesModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Quản lý trận đấu</h1>
-          <p className="text-gray-600">Tạo và quản lý lịch thi đấu</p>
+          <h1 className="text-3xl font-bold text-white">Quản lý trận đấu</h1>
+          <p className="text-white/70">Tạo và quản lý lịch thi đấu</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+        <Button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="bg-[#3872ec] hover:bg-[#2f5fc3] text-white border border-white/10"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Tạo trận đấu mới
         </Button>
@@ -214,24 +218,24 @@ export default function MatchesModule() {
 
       {/* Create Form */}
       {showCreateForm && (
-        <Card>
+        <Card className="bg-white/5 border border-white/10 text-white backdrop-blur-md">
           <CardHeader>
-            <CardTitle>Tạo trận đấu mới</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-white">Tạo trận đấu mới</CardTitle>
+            <CardDescription className="text-white/70">
               Điền thông tin để tạo trận đấu mới
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label>Vòng đấu *</Label>
+                <Label className="text-white/80">Vòng đấu *</Label>
                 <Select
                   value={formData.roundId}
                   onValueChange={(value) =>
                     setFormData({ ...formData, roundId: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
                     <SelectValue placeholder="Chọn vòng đấu" />
                   </SelectTrigger>
                   <SelectContent>
@@ -245,14 +249,14 @@ export default function MatchesModule() {
               </div>
 
               <div>
-                <Label>Đội 1 *</Label>
+                <Label className="text-white/80">Đội 1 *</Label>
                 <Select
                   value={formData.team1Id}
                   onValueChange={(value) =>
                     setFormData({ ...formData, team1Id: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
                     <SelectValue placeholder="Chọn đội 1" />
                   </SelectTrigger>
                   <SelectContent>
@@ -266,14 +270,14 @@ export default function MatchesModule() {
               </div>
 
               <div>
-                <Label>Đội 2 *</Label>
+                <Label className="text-white/80">Đội 2 *</Label>
                 <Select
                   value={formData.team2Id}
                   onValueChange={(value) =>
                     setFormData({ ...formData, team2Id: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
                     <SelectValue placeholder="Chọn đội 2" />
                   </SelectTrigger>
                   <SelectContent>
@@ -289,36 +293,42 @@ export default function MatchesModule() {
               </div>
 
               <div>
-                <Label>Thời gian thi đấu *</Label>
+                <Label className="text-white/80">Thời gian thi đấu *</Label>
                 <Input
                   type="datetime-local"
                   value={formData.matchTime}
                   onChange={(e) =>
                     setFormData({ ...formData, matchTime: e.target.value })
                   }
+                  className="bg-white/10 border-white/20 text-white"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <Label>Sân vận động</Label>
+                <Label className="text-white/80">Sân vận động</Label>
                 <Input
                   value={formData.stadium}
                   onChange={(e) =>
                     setFormData({ ...formData, stadium: e.target.value })
                   }
                   placeholder="Nhập tên sân vận động"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
                 />
               </div>
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleCreateMatch}>
+              <Button
+                onClick={handleCreateMatch}
+                className="bg-[#3872ec] hover:bg-[#2f5fc3] text-white border border-white/10"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Tạo trận đấu
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowCreateForm(false)}
+                className="border-white/20 text-white hover:bg-white/10"
               >
                 Hủy
               </Button>
@@ -328,22 +338,27 @@ export default function MatchesModule() {
       )}
 
       {/* Matches List */}
-      <Card>
+      <Card className="bg-white/5 border border-white/10 text-white backdrop-blur-md">
         <CardHeader>
-          <CardTitle>Danh sách trận đấu</CardTitle>
-          <CardDescription>{matches.length} trận đấu</CardDescription>
+          <CardTitle className="text-white">Danh sách trận đấu</CardTitle>
+          <CardDescription className="text-white/70">
+            {matches.length} trận đấu
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {matches.length === 0 ? (
             <div className="text-center py-12">
-              <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">
+              <Trophy className="h-12 w-12 text-white/60 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">
                 Chưa có trận đấu nào
               </h3>
-              <p className="text-gray-500 mb-4">
+              <p className="text-white/70 mb-4">
                 Tạo trận đấu đầu tiên để bắt đầu
               </p>
-              <Button onClick={() => setShowCreateForm(true)}>
+              <Button
+                onClick={() => setShowCreateForm(true)}
+                className="bg-[#3872ec] hover:bg-[#2f5fc3] text-white border border-white/10"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Tạo trận đấu mới
               </Button>
@@ -355,19 +370,22 @@ export default function MatchesModule() {
                 return (
                   <div
                     key={match.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-4 border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-2">
-                        <Badge variant="outline">
+                        <Badge
+                          variant="outline"
+                          className="border-white/20 text-white"
+                        >
                           {getRoundName(match.roundId)}
                         </Badge>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-white/70">
                           <Calendar className="h-4 w-4" />
                           {formatDate(match.matchTime)}
                         </div>
                         {match.stadium && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-2 text-sm text-white/70">
                             <MapPin className="h-4 w-4" />
                             {match.stadium}
                           </div>
@@ -375,12 +393,12 @@ export default function MatchesModule() {
                       </div>
 
                       <div className="flex items-center gap-4">
-                        <div className="font-semibold">
+                        <div className="font-semibold text-white">
                           {getTeamName(match.team1Id)} vs{" "}
                           {getTeamName(match.team2Id)}
                         </div>
                         {result && new Date(match.matchTime) < new Date() && (
-                          <div className="font-bold text-lg">
+                          <div className="font-bold text-lg text-white">
                             {result.team1Goals} - {result.team2Goals}
                           </div>
                         )}
@@ -393,6 +411,7 @@ export default function MatchesModule() {
                         variant="ghost"
                         size="sm"
                         onClick={() => router.push(`/match/${match.id}`)}
+                        className="text-white hover:bg-white/20"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -400,6 +419,7 @@ export default function MatchesModule() {
                         variant="ghost"
                         size="sm"
                         onClick={() => router.push(`/match/update/${match.id}`)}
+                        className="text-white hover:bg-white/20"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -407,7 +427,7 @@ export default function MatchesModule() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteMatch(match.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-300 hover:text-red-200 hover:bg-red-500/20"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
