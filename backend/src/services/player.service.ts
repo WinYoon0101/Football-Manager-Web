@@ -70,6 +70,18 @@ class PlayerService {
       },
     });
   }
+
+  // Lấy tất cả players theo team
+  async getByTeam(teamId: number) {
+    return prisma.player.findMany({
+      where: { teamId },
+      include: {
+        team: true,
+        playerType: true,
+      },
+      orderBy: { name: "asc" },
+    });
+  }
 }
 
 export default new PlayerService();

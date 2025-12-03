@@ -14,12 +14,14 @@ import {
   CalendarDays,
   ArrowLeft,
 } from "lucide-react";
-import { MatchResult, Team } from "@/lib/types";
+import { Application, MatchResult, Team } from "@/lib/types";
 import { matchApi, resultApi } from "@/lib/api/matches";
 import { teamsAPI } from "@/lib/api/teams";
 
 import EditSeasonModal from "@/components/seasons/EditSeasonModal";
 import DeleteSeasonModal from "@/components/seasons/DeleteSeasonModal";
+import { Button } from "@/components/ui/button";
+import { applicationApi } from "@/lib/api/application";
 
 // ======================= TYPES =========================
 
@@ -53,6 +55,8 @@ type Ranking = {
 const TEAM_AVATAR = (name: string) =>
   `https://api.dicebear.com/9.x/shapes/svg?seed=${name}`;
 
+
+
 // ========================================================
 
 export default function SeasonDetailPage() {
@@ -67,7 +71,7 @@ export default function SeasonDetailPage() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selected, setSelected] = useState<RegisterRequest | null>(null);
+  const [selected, setSelected] = useState<Application | null>(null);
   const [activeTab, setActiveTab] = useState("matches"); // matches | teams
 
   const [createMatchModal, setCreateMatchModal] = useState(false);
@@ -86,6 +90,8 @@ export default function SeasonDetailPage() {
 
   const [stadium, setStadium] = useState("");
   const [teams, setTeams] = useState<Team[]>([]);
+
+  const [applications, setApplications] = useState<Application[]>([]);
 
   const [matchTime, setMatchTime] = useState("");
 
@@ -112,36 +118,25 @@ export default function SeasonDetailPage() {
     setStadium(team?.homeStadium || "");
   }, [homeTeam, teams]);
 
-  // Fake request data
-  const registerRequests: RegisterRequest[] = [
-    {
-      id: 1,
-      name: "CLB Phú Thọ",
-      founded: "2016-01-01",
-      stadium: "SVĐ Phú Thọ",
-      players: 24,
-      date: "2024-02-10",
-      note: "Xin tham gia mùa giải",
-    },
-    {
-      id: 2,
-      name: "Manh Quang FC",
-      founded: "2018-04-21",
-      stadium: "SVĐ Việt Trì",
-      players: 22,
-      date: "2024-02-12",
-      note: "Đề nghị xem lại hồ sơ",
-    },
-    {
-      id: 3,
-      name: "HCM FC",
-      founded: "2018-04-21",
-      stadium: "SVĐ Thống Nhất",
-      players: 23,
-      date: "2024-02-12",
-      note: "Đăng ký tham gia giải đấu.",
-    },
-  ];
+  // Hàm định dạng ngày tháng
+  function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+}
+
+ 
+
+  const pageBackgroundStyle = {
+    backgroundImage:
+      'linear-gradient(rgba(8, 21, 56, 0.5), rgba(8, 21, 56, 0.55)), url("/bg.jpg")',
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundAttachment: "fixed",
+  } as const;
 
   // ======================================
   // LOAD API
@@ -151,16 +146,19 @@ export default function SeasonDetailPage() {
     try {
       setLoading(true);
 
-      const [res, rankRes, matchRes, teamsRes] = await Promise.all([
+      const [res, rankRes, matchRes, teamsRes, appsRes] = await Promise.all([
         seasonApi.getById(id),
         seasonApi.getRankings(id),
         resultApi.getResultsBySeason(id),
         teamsAPI.getAll(), // lấy tất cả teams
+        applicationApi.getBySeason(id),
       ]);
 
       setTeams(teamsRes);
 
       setSeason(res.data);
+
+      setApplications(appsRes.data); 
 
       setRankings(
         (rankRes.data || []).map((item: any, index: number) => ({
@@ -255,8 +253,8 @@ export default function SeasonDetailPage() {
     loadData();
   }, [id]);
 
-  const openDetail = (item: RegisterRequest) => {
-    setSelected(item);
+  const openDetail = (app: Application) => {
+    setSelected(app);
     setModalOpen(true);
   };
 
@@ -265,45 +263,73 @@ export default function SeasonDetailPage() {
   // ======================================
 
   if (loading) {
-    return <p className="p-10 text-gray-600">Đang tải dữ liệu...</p>;
+    return (
+      <div className="min-h-screen" style={pageBackgroundStyle}>
+        <div className="min-h-screen bg-black/30 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+            <p className="mt-4">Đang tải thông tin mùa giải...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!season) {
-    return <p className="p-10 text-red-600">Không tìm thấy mùa giải.</p>;
+    return (
+      <div className="min-h-screen" style={pageBackgroundStyle}>
+        <div className="min-h-screen bg-black/40 flex items-center justify-center">
+          <div className="text-center text-white">
+            <h1 className="text-2xl font-bold mb-4">Không tìm thấy mùa giải</h1>
+            <Button
+              className="text-white border border-white/20"
+              variant="ghost"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Quay lại
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 p-8">
+    <div className="w-full min-h-screen p-8" style={pageBackgroundStyle}>
       {/* HEADER */}
       <div className="flex items-center justify-between mb-8">
         {/* LEFT: Back + Title */}
-        <div className="flex items-start gap-5">
-          {/* BACK BUTTON */}
-          {/* <button
-       onClick={() => router.back()}
-      className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition shadow-sm"
-    >
-      <ArrowLeft className="w-5 h-5 text-gray-700" />
-    </button> */}
+    <div className="flex flex-col">
+    {/* Back + Title (ngang) */}
+    <div className="flex items-center gap-4 mb-2">
+      <Button
+        className="text-white border border-white/20"
+        variant="ghost"
+        onClick={() => router.back()}
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Button>
 
-          {/* TITLE */}
-          <div>
-            <h1 className="text-4xl font-extrabold text-gray-900 leading-tight tracking-tight">
-              {season.name}
-            </h1>
+      <h1 className="text-4xl font-extrabold text-white leading-tight tracking-tight">
+        {season.name}
+      </h1>
+    </div>
 
-            <div className="mt-2 flex items-center gap-2 text-gray-600 text-lg font-medium">
-              <CalendarDays className="w-5 h-5 text-blue-800" />
-              <span>
-                {season.startDate &&
-                  new Date(season.startDate).toLocaleDateString("vi-VN")}{" "}
-                –{" "}
-                {season.endDate &&
-                  new Date(season.endDate).toLocaleDateString("vi-VN")}
-              </span>
-            </div>
-          </div>
-        </div>
+    {/* DATE LINE (centered under the above group) */}
+    <div className="flex justify-center w-full">
+      <div className="flex items-center gap-2 text-gray-200 text-lg font-medium">
+        <CalendarDays className="w-5 h-5 text-blue-800" />
+        <span>
+          {season.startDate &&
+            new Date(season.startDate).toLocaleDateString("vi-VN")}{" "}
+          –{" "}
+          {season.endDate &&
+            new Date(season.endDate).toLocaleDateString("vi-VN")}
+        </span>
+      </div>
+    </div>
+  </div>
 
         {/* RIGHT: Menu */}
         <div className="relative">
@@ -362,20 +388,37 @@ export default function SeasonDetailPage() {
       <div className="flex gap-10">
         {/* LEFT (MATCHES) */}
         <div className="flex-1">
-          <div className="bg-white rounded-2xl border shadow-xl p-7">
-            {Object.keys(groupedMatches)
-              .map(Number)
-              .sort((a, b) => a - b)
-              .map((roundId) => (
-                <div key={roundId}>
-                  {/* HEADER VÒNG */}
-                  <div className="flex items-center justify-center gap-3 mb-6 p-3 bg-blue-800 rounded-xl shadow-sm">
-                    <h2 className="text-xl font-bold text-white tracking-wide">
-                      {getRoundName(roundId)}
-                    </h2>
-                  </div>
+  <div className="shadow-sm bg-white/20 border-white/20 text-white rounded-2xl p-7 flex flex-col items-center justify-center">
+    {Object.keys(groupedMatches).length === 0 ? (
+      <div className="text-center">
+       
+        <h3 className="text-xl font-bold text-white mb-2">
+          Chưa có trận đấu nào
+        </h3>
+        <p className="text-white/80 mb-6">
+          Hãy tạo trận đấu để bắt đầu mùa giải
+        </p>
+        <button
+          onClick={() => setCreateMatchModal(true)}
+          className="px-6 py-3 rounded-xl bg-blue-700 text-white font-semibold hover:bg-blue-800 shadow"
+        >
+          + Tạo trận đấu
+        </button>
+      </div>
+    ) : (
+      Object.keys(groupedMatches)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map((roundId) => (
+          <div key={roundId}>
+            {/* HEADER VÒNG */}
+            <div className="flex items-center justify-center gap-3 mb-6 p-3 bg-blue-800 rounded-xl shadow-sm">
+              <h2 className="text-xl font-bold text-white tracking-wide">
+                {getRoundName(roundId)}
+              </h2>
+            </div>
 
-                  {groupedMatches[roundId].map((m) => {
+              {groupedMatches[roundId].map((m) => {
                     const t1 = m.match.team1;
                     const t2 = m.match.team2;
                     const score = `${m.team1Goals} - ${m.team2Goals}`;
@@ -386,14 +429,14 @@ export default function SeasonDetailPage() {
                         onClick={() => router.push(`/match/${m.matchId}`)}
                         className="
             p-5 mb-5 rounded-2xl 
-            bg-white border border-blue-100 
+            bg-white/70 border border-blue-100 
             flex items-center justify-between 
             hover:bg-blue-50/40 transition cursor-pointer
             shadow-sm hover:shadow-md
           "
                       >
                         {/* TIME */}
-                        <div className="w-[120px] text-left">
+                        <div className="w-[140px] text-left">
                           <div className="text-lg font-bold text-blue-700">
                             {new Date(m.match.matchTime).toLocaleTimeString(
                               "vi-VN",
@@ -411,7 +454,7 @@ export default function SeasonDetailPage() {
                         </div>
 
                         {/* HOME TEAM */}
-                        <div className="flex items-center gap-3 w-[220px] justify-center">
+                        <div className="flex items-center gap-3 w-[240px] justify-center">
                           <img
                             src={t1.image ?? TEAM_AVATAR(t1.name)}
                             className="w-10 h-10 rounded-full object-cover border border-blue-200"
@@ -427,7 +470,7 @@ export default function SeasonDetailPage() {
                         </div>
 
                         {/* AWAY TEAM */}
-                        <div className="flex items-center gap-3 w-[220px] justify-center">
+                        <div className="flex items-center gap-3 w-[240px] justify-center">
                           <span className="text-sm font-medium text-gray-800 truncate">
                             {t2.name}
                           </span>
@@ -438,11 +481,11 @@ export default function SeasonDetailPage() {
                         </div>
 
                         {/* SCORE */}
-                        <div className="w-[80px] text-center text-xl font-bold text-gray-900">
+                        <div className="w-[110px] text-center text-xl font-bold text-gray-900">
                           {score}
                         </div>
 
-                        {/* MENU ICON */}
+                    
                         {/* MENU ICON */}
                         <div
                           className="relative"
@@ -462,7 +505,7 @@ export default function SeasonDetailPage() {
                           >
                             <EllipsisVertical
                               size={20}
-                              className="text-blue-500"
+                              className="text-blue-900"
                             />
                           </button>
 
@@ -477,12 +520,12 @@ export default function SeasonDetailPage() {
                                   router.push(`/match/${m.matchId}`);
                                   setOpenMenuMatchId(null);
                                 }}
-                                className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                                className="w-full text-left px-4 py-2 text-black hover:bg-gray-100"
                               >
                                 Xem chi tiết
                               </button>
 
-                              <button className="w-full text-left px-4 py-2 hover:bg-gray-100 cursor-not-allowed">
+                              <button className="w-full text-left px-4 py-2 text-black hover:bg-gray-100 cursor-not-allowed">
                                 Xếp lịch
                               </button>
 
@@ -498,21 +541,23 @@ export default function SeasonDetailPage() {
                       </div>
                     );
                   })}
-                </div>
-              ))}
           </div>
-        </div>
+        ))
+    )}
+  </div>
+</div>
+
 
         {/* RIGHT AREA */}
         <div className="w-[480px] shrink-0 flex flex-col gap-8">
           {/* RANKING */}
-          <div className="bg-white rounded-2xl border shadow-xl p-6">
-            <h2 className="text-xl font-bold text-blue-800 mb-5">
+          <div className="shadow-sm bg-white/20 border-white/20 rounded-2xl p-6">
+            <h2 className="text-xl font-bold text-white mb-5">
               Bảng Xếp Hạng
             </h2>
 
             {/* Header */}
-            <div className="flex items-center px-4 py-2 text-xs font-semibold text-gray-500 border-b">
+            <div className="flex items-center px-4 py-2 text-xs font-semibold text-white/80 border-b">
               <div className="w-12">Rank</div>
               <div className="flex-1 pl-3">Đội</div>
               <div className="w-20 text-center">T-H-B</div>
@@ -524,7 +569,7 @@ export default function SeasonDetailPage() {
               {rankings.map((item) => (
                 <div
                   key={item.rank}
-                  className="flex items-center px-4 py-3 group hover:bg-gray-50 transition-colors"
+                  className="flex items-center px-4 py-3 group hover:bg-gray-400 transition-colors"
                 >
                   {/* Rank badge premium */}
                   <div
@@ -548,21 +593,21 @@ export default function SeasonDetailPage() {
                       src={item.image}
                       className="w-9 h-9 rounded-2xl object-cover border shadow-sm"
                     />
-                    <div className="font-medium text-sm">{item.team}</div>
+                    <div className="font-medium text-sm text-white">{item.team}</div>
                   </div>
 
                   {/* T-H-B */}
-                  <div className="w-20 text-center text-sm text-gray-700">
+                  <div className="w-20 text-center text-sm text-white/90 font-medium">
                     {item.thb}
                   </div>
 
                   {/* Hiệu số */}
-                  <div className="w-16 text-center text-sm font-semibold text-gray-800">
+                  <div className="w-16 text-center text-sm font-semibold text-gray-200">
                     {item.hieu}
                   </div>
 
                   {/* Điểm */}
-                  <div className="w-16 text-center text-lg font-extrabold text-blue-600">
+                  <div className="w-16 text-center text-lg font-extrabold text-blue-300">
                     {item.point}
                   </div>
                 </div>
@@ -572,132 +617,155 @@ export default function SeasonDetailPage() {
 
           {/* REGISTER SECTION */}
 
-          <div className="bg-white rounded-2xl border shadow-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl text-blue-800 font-bold">Đơn Đăng Ký</h2>
+          <div className="shadow-sm bg-white/20 border-white/20 rounded-2xl p-6">
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-xl text-white font-bold">Đơn Đăng Ký</h2>
+    {/* Badge số lượng */}
+    <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">
+      {applications.length} đơn
+    </span>
+  </div>
 
-              {/* Badge số lượng */}
-              <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">
-                {registerRequests.length} đơn
-              </span>
-            </div>
-
-            {/* LIST AREA (scrollable) */}
-            <div className="space-y-3 max-h-[180px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300">
-              {registerRequests.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => openDetail(item)}
-                  className="
-          p-4 rounded-xl border bg-gray-50 shadow-sm cursor-pointer
-          hover:bg-white hover:border-blue-500 hover:shadow-md transition-all
-          flex items-center gap-4
-        "
-                >
-                  {/* Avatar logo đội */}
-                  <img
-                    src={TEAM_AVATAR(item.name)}
-                    className="w-12 h-12 rounded-full object-cover border shadow bg-white"
-                  />
-
-                  <div className="flex-1">
-                    <div className="font-bold text-gray-900">{item.name}</div>
-                    <div className="text-sm text-gray-500">{item.note}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Button mở modal */}
-            <button
-              onClick={() => setModalOpen(true)}
-              className="
-      w-full mt-6 py-3 bg-blue-800 text-white rounded-xl 
-      font-semibold hover:bg-blue-900 shadow
-    "
-            >
-              Xem tất cả yêu cầu
-            </button>
+  {/* LIST AREA (scrollable) */}
+  <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300">
+    {applications.map((app) => (
+      <div
+        key={app.id}
+        className="flex items-center gap-3 p-3 bg-white/30 rounded-xl hover:bg-white/50 transition cursor-pointer"
+        onClick={() => openDetail(app)}
+      >
+        {app.team.image && (
+          <img
+            src={app.team.image}
+            alt={app.team.name}
+            className="w-12 h-12 rounded-full object-cover border border-white/30"
+          />
+        )}
+        <div className="flex-1">
+          <div className="font-semibold text-white">{app.team.name}</div>
+          <div className="text-sm text-gray-200">
+            Ngày đăng ký: {formatDate(app.dateSignin)}
           </div>
+        </div>
+        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-200 text-yellow-800">
+          {app.status === "pending" ? "Chờ duyệt" : "Đang xử lý"}
+        </span>
+      </div>
+    ))}
+  </div>
+
+  {/* Button mở modal */}
+  <button
+    onClick={() => setModalOpen(true)}
+    className="w-full mt-6 py-3 bg-blue-800 text-white rounded-xl font-semibold hover:bg-blue-900 shadow transition"
+  >
+    Xem tất cả yêu cầu
+  </button>
+</div>
         </div>
       </div>
 
-      {/* MODAL */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl grid grid-cols-2 overflow-hidden">
-            {/* LEFT LIST */}
-            <div className="border-r p-6 bg-gray-50">
-              <h2 className="text-xl font-bold mb-4">Đơn Chờ Xét Duyệt</h2>
-
-              <div className="space-y-3">
-                {registerRequests.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => openDetail(item)}
-                    className={`w-full p-4 rounded-xl border bg-white shadow-sm hover:shadow-md transition text-left ${
-                      selected?.id === item.id
-                        ? "bg-blue-50 border-blue-600"
-                        : ""
-                    }`}
-                  >
-                    <div className="font-semibold">{item.name}</div>
-                    <div className="text-sm text-gray-500">{item.note}</div>
-                  </button>
-                ))}
+     {/* MODAL */}
+{modalOpen && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className=" bg-white/80 w-full max-w-4xl rounded-3xl shadow-2xl grid grid-cols-2 overflow-hidden animate-fadeIn">
+      
+      {/* LEFT LIST */}
+      <div className="border-r p-6 overflow-y-auto max-h-[80vh]">
+        <h2 className="text-2xl font-bold mb-6 text-gray-700">Đơn Chờ Xét Duyệt</h2>
+        <div className="space-y-3">
+          {applications.map((app) => (
+            <button
+              key={app.id}
+              onClick={() => openDetail(app)}
+              className={`w-full flex items-center gap-3 p-4 rounded-xl border bg-white/50 shadow-sm hover:shadow-md transition text-left ${
+                selected?.id === app.id ? "bg-blue-50 border-blue-600" : ""
+              }`}
+            >
+              {app.team.image && (
+                <img
+                  src={app.team.image}
+                  alt={app.team.name}
+                  className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                />
+              )}
+              <div className="flex-1">
+                <div className="font-semibold text-gray-800">{app.team.name}</div>
+                <div className="text-sm text-gray-500">
+                  {formatDate(app.dateSignin)}
+                </div>
               </div>
+              <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-200 text-yellow-800">
+                {app.status === "pending" ? "Chờ duyệt" : "Đang xử lý"}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* RIGHT DETAIL */}
+      <div className="p-8 relative overflow-y-auto max-h-[80vh] flex flex-col items-center justify-center text-center">
+        {/* Close button */}
+        <button
+          onClick={() => setModalOpen(false)}
+          className="absolute right-6 top-6 text-gray-500 hover:text-black transition"
+        >
+          <X size={24} />
+        </button>
+
+        {selected ? (
+          <>
+            {selected.team.image && (
+              <img
+                src={selected.team.image}
+                alt={selected.team.name}
+                className="w-28 h-28 rounded-full object-cover border-2 border-gray-200 mb-4"
+              />
+            )}
+            <h2 className="text-3xl font-bold mb-4 text-gray-800">{selected.team.name}</h2>
+
+            <div className="space-y-2 text-gray-700 text-left">
+              <p><b>Sân Nhà:</b> {selected.team.homeStadium ?? "Chưa có"}</p>
+              <p><b>Số Cầu Thủ:</b> {selected.team.playerCount ?? "Chưa có"}</p>
+              <p><b>Ngày Đăng Ký:</b> {new Date(selected.dateSignin).toLocaleDateString("vi-VN")}</p>
+              <p><b>Trạng Thái:</b> {selected.status === "pending" ? "Chờ duyệt" : "Đang xử lý"}</p>
             </div>
 
-            {/* RIGHT DETAIL */}
-            <div className="p-6 relative">
+            <div className="flex gap-4 mt-8 w-full justify-center">
               <button
-                onClick={() => setModalOpen(false)}
-                className="absolute right-4 top-4 text-gray-500 hover:text-black"
+                onClick={async () => {
+                  await applicationApi.update(selected.id, { status: "accepted" });
+                  setModalOpen(false);
+                  loadData();
+                }}
+                className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 flex items-center justify-center gap-2 shadow transition"
               >
-                <X size={22} />
+                <Check size={18} /> Duyệt
               </button>
 
-              {selected ? (
-                <div>
-                  <h2 className="text-2xl font-bold mb-6">{selected.name}</h2>
-
-                  <div className="space-y-3 text-gray-700">
-                    <p>
-                      <b>Ngày Thành Lập:</b> {selected.founded}
-                    </p>
-                    <p>
-                      <b>Sân Nhà:</b> {selected.stadium}
-                    </p>
-                    <p>
-                      <b>Số Cầu Thủ:</b> {selected.players}
-                    </p>
-                    <p>
-                      <b>Ngày Đăng Ký:</b> {selected.date}
-                    </p>
-                    <p>
-                      <b>Ghi chú:</b> {selected.note}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-4 mt-8">
-                    <button className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 flex items-center justify-center gap-2 shadow">
-                      <Check size={18} /> Duyệt
-                    </button>
-
-                    <button className="flex-1 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 flex items-center justify-center gap-2 shadow">
-                      <X size={18} /> Từ Chối
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-gray-400 italic mt-10">
-                  Chọn 1 đơn bên trái để xem chi tiết...
-                </div>
-              )}
+              <button
+                onClick={async () => {
+                  await applicationApi.update(selected.id, { status: "rejected" });
+                  setModalOpen(false);
+                  loadData();
+                }}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 flex items-center justify-center gap-2 shadow transition"
+              >
+                <X size={18} /> Từ Chối
+              </button>
             </div>
+          </>
+        ) : (
+          <div className="text-gray-400 italic mt-4">
+            Chọn 1 đơn bên trái để xem chi tiết...
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+    </div>
+  </div>
+)}
+
       {/* MODAL TẠO TRẬN ĐẤU MỚI */}
       {createMatchModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-[3px] flex items-center justify-center p-4 z-50 animate-fadeIn">

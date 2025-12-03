@@ -20,6 +20,7 @@ model Team {
   matchesAsTeam2 Match[]       @relation("Team2")
   players        Player[]
   rankings       Ranking[]
+  managers User[]
 
   @@map("teams")
 }
@@ -158,11 +159,18 @@ model Ranking {
   @@map("ranking")
 }
 
+
+
 model User {
   id        Int      @id @default(autoincrement()) 
   email     String   @unique                       
   password  String                                
-  name      String?                                
+  name      String?           
+  role String @default("user")
+  teamId    Int?              
+
+  team      Team?    @relation(fields: [teamId], references: [id])
+
   createdAt DateTime @default(now())               
   updatedAt DateTime @updatedAt                    
 }

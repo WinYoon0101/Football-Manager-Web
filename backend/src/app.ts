@@ -9,6 +9,8 @@ import reportRoutes from "./routes/report.routes";
 import seasonRoutes from "./routes/season.routes";
 import authRoutes from "./routes/auth.routes";
 import parameterRoutes from "./routes/parameter.routes";
+import applicationRoutes from "./routes/application.route";
+import userRoutes from "./routes/user.route";
 const app = express();
 
 app.use(
@@ -31,6 +33,10 @@ app.use("/goals", goalRoutes);
 app.use("/reports", reportRoutes);
 app.use("/seasons", seasonRoutes);
 app.use("/parameters", parameterRoutes);
+app.use("/applications", applicationRoutes);
+app.use("/users", userRoutes);
+
+
 
 // Debug: Log registered routes
 console.log("Registered routes:");
