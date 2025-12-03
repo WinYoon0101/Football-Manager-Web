@@ -11,6 +11,8 @@ router.post("/", uploadSingle("image"), PlayerController.create);
 router.put("/:id", uploadSingle("image"), PlayerController.update);
 router.delete("/:id", PlayerController.delete);
 
+router.get("/team/:teamId", PlayerController.getByTeam);
+
 export default router;
 
 

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { useRouter } from "next/navigation";
+import { applicationApi } from "@/lib/api/application";
 
 // ===== Helper: Tính trạng thái mùa giải =====
 function getSeasonStatus(startDate: string | null, endDate: string | null) {
@@ -49,6 +50,8 @@ function getSeasonStatus(startDate: string | null, endDate: string | null) {
 export default function SeasonsModule() {
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [teamsCount, setTeamsCount] = useState<Record<number, number>>({});
 
   const router = useRouter();
 
@@ -90,9 +93,29 @@ export default function SeasonsModule() {
     }
   }
 
-  useEffect(() => {
-    loadSeasons();
-  }, []);
+   useEffect(() => {
+  const loadSeasons = async () => {
+    try {
+      setLoading(true);
+      const res = await seasonApi.getAll();
+      setSeasons(res.data);
+
+      // Lấy số đội accepted cho từng season
+      const counts: Record<number, number> = {};
+      await Promise.all(
+        res.data.map(async (s) => {
+          const teamsRes = await applicationApi.getAcceptedTeamsBySeason(s.id);
+          counts[s.id] = teamsRes.data.length; // số đội accepted
+        })
+      );
+      setTeamsCount(counts);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadSeasons();
+}, []);
 
   // ===== FILTER =====
   const filtered = seasons.filter((s) => {
@@ -200,7 +223,7 @@ export default function SeasonsModule() {
                     {item.name}
                   </div>
 
-                  <div>
+                  <div  onClick={() => router.push(`/season/${item.id}`)} className="cursor-pointer">
                     <span
                       className={`px-2 py-1 rounded-md text-xs font-medium border
                       ${
@@ -215,14 +238,14 @@ export default function SeasonsModule() {
                     </span>
                   </div>
 
-                  <div className="text-white/80">
+                  <div className="text-white/80 cursor-pointer" onClick={() => router.push(`/season/${item.id}`)} >
                     {item.startDate?.slice(0, 10)}
                   </div>
-                  <div className="text-white/80">
+                  <div className="text-white/80 cursor-pointer" onClick={() => router.push(`/season/${item.id}`)} >
                     {item.endDate?.slice(0, 10)}
                   </div>
 
-                  <div className="font-medium text-white/80">—</div>
+                  <div className="font-medium text-white/80">{teamsCount[item.id] ?? 0}</div>
 
                   {/* Dropdown */}
                   <div className="flex justify-center">
@@ -233,6 +256,7 @@ export default function SeasonsModule() {
 
                       <DropdownMenuContent>
                         <DropdownMenuItem
+                        className="cursor-pointer"
                           onClick={() => {
                             setEditing(item);
                             setEditForm({
@@ -247,7 +271,7 @@ export default function SeasonsModule() {
                         </DropdownMenuItem>
 
                         <DropdownMenuItem
-                          className="text-red-600"
+                          className="text-red-600 cursor-pointer"
                           onClick={() => {
                             setDeleting(item);
                             setOpenDelete(true);

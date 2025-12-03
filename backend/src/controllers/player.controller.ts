@@ -307,6 +307,27 @@ class PlayerController {
       });
     }
   }
+
+// Lấy tất cả players theo teamId
+  async getByTeam(req: Request, res: Response) {
+  try {
+    const teamId = Number(req.params.teamId);
+
+    if (isNaN(teamId) || teamId <= 0) {
+      return res.status(400).json({ message: "Team ID không hợp lệ" });
+    }
+
+    const data = await PlayerService.getByTeam(teamId);
+
+    res.json(data);
+  } catch (err: any) {
+    console.error("Get players by team error:", err);
+    res.status(500).json({
+      message: "Không thể lấy danh sách cầu thủ theo đội",
+      error: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    });
+  }
+}
 }
 
 export default new PlayerController();

@@ -237,9 +237,9 @@ export default function TeamsModule() {
           <Button
             variant="outline"
             onClick={() => setShowDetail(false)}
-            className="gap-2 border-white/20 text-white hover:bg-white/10"
+            className="gap-2 text-white hover:text-white flex bg-blue-600 border-white/20  hover:bg-blue-700"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 mt-0.5" />
             Quay Lại
           </Button>
         </div>
@@ -260,7 +260,7 @@ export default function TeamsModule() {
                     className="w-26 h-26 rounded-lg object-cover shadow-sm border"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-lg border border-white/20 flex items-center justify-center text-white/60">
+                  <div className="w-24 h-24 rounded-lg border border-white/20 flex items-center justify-center text-white/60 px-5">
                     Không có logo
                   </div>
                 )}

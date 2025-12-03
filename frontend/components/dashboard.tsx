@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Trophy,
@@ -44,6 +44,18 @@ export default function Dashboard() {
     backgroundAttachment: "fixed",
   } as const;
 
+  // Load tab gần nhất khi component mount
+  useEffect(() => {
+    const lastTab = localStorage.getItem("dashboardActiveTab");
+    if (lastTab) setActiveTab(lastTab);
+  }, []);
+
+  // Hàm đổi tab và lưu vào localStorage
+  const handleSetTab = (tab: string) => {
+    setActiveTab(tab);
+    localStorage.setItem("dashboardActiveTab", tab);
+  };
+
   return (
     <div className="flex h-screen" style={pageBackgroundStyle}>
       <aside
@@ -84,7 +96,7 @@ export default function Dashboard() {
               <button
                 key={item.id}
                 onClick={() => {
-                  setActiveTab(item.id);
+                    handleSetTab(item.id); // Sử dụng hàm lưu tab
                   setSidebarOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
