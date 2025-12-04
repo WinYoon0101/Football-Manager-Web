@@ -1,0 +1,30 @@
+import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+
+import "./globals.css";
+import { ToastProvider } from "@/components/toast-provider";
+
+export const metadata: Metadata = {
+  title: "Football",
+  description: "Football Series Player Dashboard",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="font-sans">
+        {children}
+        <ToastProvider />
+      </body>
+    </html>
+  );
+}
