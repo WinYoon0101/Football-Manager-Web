@@ -108,6 +108,18 @@ class PlayerController {
     } catch (err: any) {
       console.error("Create player error:", err);
 
+      // Handle validation errors (từ validatePlayerCreation)
+      if (err.message && (
+        err.message.includes("Tuổi cầu thủ") ||
+        err.message.includes("số lượng cầu thủ") ||
+        err.message.includes("cầu thủ nước ngoài") ||
+        err.message.includes("thông tin quy định")
+      )) {
+        return res.status(400).json({
+          message: err.message,
+        });
+      }
+
       // Handle Prisma errors
       if (err.code === "P2002") {
         return res.status(400).json({

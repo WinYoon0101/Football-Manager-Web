@@ -76,31 +76,34 @@ class ApplicationController {
   }
 
   // Tạo mới application
-  async create(req: Request, res: Response) {
-    try {
-      const { teamId, seasonId, status } = req.body;
+async create(req: Request, res: Response) {
+  try {
+    const { teamId, seasonId, status } = req.body;
 
-      if (!teamId || !seasonId) {
-        return res.status(400).json({
-          message: "Thiếu dữ liệu (teamId, seasonId)",
-        });
-      }
-
-      const newApplication = await ApplicationService.create({
-        teamId,
-        seasonId,
-        status,
-      });
-
-      res.status(201).json(newApplication);
-    } catch (err: any) {
-      console.error("Create application error:", err);
-      res.status(500).json({
-        message: "Không thể tạo application",
-        error: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    if (!teamId || !seasonId) {
+      return res.status(400).json({
+        message: "Thiếu dữ liệu (teamId, seasonId)",
       });
     }
+
+    const newApplication = await ApplicationService.create({
+      teamId,
+      seasonId,
+      status,
+    });
+
+    return res.status(201).json(newApplication);
+
+  } catch (err: any) {
+    console.error("Create application error:", err);
+
+    // 🔥 quan trọng: trả message thật
+    return res.status(400).json({
+      message: err.message || "Không thể tạo application",
+    });
   }
+}
+
 
   // Cập nhật application
   async update(req: Request, res: Response) {

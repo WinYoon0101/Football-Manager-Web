@@ -49,10 +49,7 @@ export default function ApplicationModal({
       onClose();
     } catch (e: any) {
       console.error(e);
-      setError(type === "apply"
-        ? "Không thể đăng ký. Vui lòng thử lại."
-        : "Không thể hủy đăng ký. Vui lòng thử lại."
-      );
+     setError(e?.response?.data?.message || e.message || "Có lỗi xảy ra!");
     } finally {
       setLoading(false);
     }
