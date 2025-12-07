@@ -66,8 +66,35 @@ async getAllBySeason(seasonId: number) {
     });
   }
 
+  // Validate trước khi tạo application
+async validateApplicationCreation(teamId: number) {
+  // Lấy thông tin quy định
+  const parameter = await prisma.parameter.findUnique({
+    where: { id: 1 },
+  });
+
+  if (!parameter) {
+    throw new Error("Không tìm thấy thông tin quy định");
+  }
+
+  // Lấy số lượng cầu thủ hiện tại của đội
+  const playerCount = await prisma.player.count({
+    where: { teamId },
+  });
+
+  // Kiểm tra số lượng tối thiểu
+  if (parameter.minPlayers !== null && playerCount < parameter.minPlayers) {
+    throw new Error(
+      `Đội bóng chưa đủ số lượng cầu thủ tối thiểu để tham gia (${parameter.minPlayers} cầu thủ). Hiện có ${playerCount} cầu thủ.`
+    );
+  }
+}
+
   // Tạo mới application
   async create(data: CreateApplicationDTO) {
+    // Validate trước
+  await this.validateApplicationCreation(data.teamId);
+  
     return prisma.application.create({
       data: {
         teamId: data.teamId,
