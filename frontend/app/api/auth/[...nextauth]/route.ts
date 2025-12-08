@@ -10,8 +10,6 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // Gọi sang Backend Express (Nhà số 1)
-        // Lưu ý: Backend chạy port 4000
         const res = await fetch("http://127.0.0.1:4000/auth/login", {
           method: 'POST',
           body: JSON.stringify(credentials),

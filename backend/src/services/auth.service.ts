@@ -14,8 +14,9 @@ class AuthService {
     // hash password
     const hashPassword = await bcrypt.hash(password, 10);
     // create new user
+    const role = 'player';
     const newUser = await prisma.user.create({
-      data: { email, password: hashPassword, name },
+      data: { email, password: hashPassword, name, role },
     });
 
     return { id: newUser.id, email: newUser.email, name: newUser.name };

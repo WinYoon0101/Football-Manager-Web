@@ -36,6 +36,20 @@ class SeasonController {
     }
   }
 
+  // // Lấy mùa giải mới nhất
+  // async getNewest(req: Request, res: Response) {
+  //   try {
+  //     const newestSeason = await SeasonService.getNewest();
+  //     res.json(newestSeason);
+  //   } catch (err: any) {
+  //     console.error("Get newest season error:", err);
+  //     res.status(500).json({
+  //       message: "Không thể lấy mùa giải mới nhất",
+  //       error: process.env.NODE_ENV === "development" ? err.stack : undefined,
+  //     });
+  //   }
+  // }
+
    // Tạo mới mùa giải
   async create(req: Request, res: Response) {
     try {
@@ -86,8 +100,7 @@ class SeasonController {
         error: process.env.NODE_ENV === "development" ? err.stack : undefined,
       });
     }
-  }
-
+  }  
   // Cập nhật mùa giải
   async update(req: Request, res: Response) {
     try {

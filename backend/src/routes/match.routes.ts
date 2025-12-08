@@ -13,11 +13,11 @@ router.get("/results", MatchController.getAllResults);
 // Match routes
 router.get("/season/:seasonId", MatchController.getBySeason);
 router.get("/season/:seasonId/results", MatchController.getResultsBySeason);
+router.get("/list/upcoming", MatchController.getUpcomingMatches);
 router.get("/rounds", MatchController.getRounds);
 router.get("/", MatchController.getAll);
 router.get("/:id", MatchController.getById);
 router.post("/", MatchController.create);
 router.put("/:id", MatchController.update);
 router.delete("/:id", MatchController.delete);
-
 export default router;

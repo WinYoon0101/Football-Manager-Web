@@ -1,5 +1,5 @@
 import { api } from "./axios";
-
+import type { Match} from "@/lib/types";
 export interface MatchResult {
   matchId: number;
   match: {
@@ -43,6 +43,22 @@ export interface MatchResult {
   }>;
 }
 
+export interface StandingTeam {
+  team: {
+    id: number;
+    name: string;
+    image: string | null;
+  };
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}
+
 export const resultApi = {
   async getAll(seasonId?: number): Promise<MatchResult[]> {
     const params =
@@ -56,6 +72,24 @@ export const resultApi = {
     });
     return res.data;
   },
+
+    // Lấy các trận đấu sắp tới
+  getUpcomingMatches: () => api.get<Match[]>("/matches/list/upcoming"),
+
+    // Lấy bảng xếp hạng
+  getStandings: (seasonId?: number) => {
+    const params =
+      seasonId !== undefined
+        ? {
+            seasonId,
+          }
+        : {};
+    return api.get<StandingTeam[]>("/matches/results/standings", { params });
+  },
 };
 
 
+export const matchApi = {
+  // Lấy tất cả trận đấu
+  getAll: () => api.get<Match[]>("/matches"),
+}

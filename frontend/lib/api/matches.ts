@@ -113,6 +113,9 @@ export const resultApi = {
   // Lấy kết quả trận đấu theo ID
   getById: (matchId: number) =>
     api.get<MatchResult>(`/matches/results/${matchId}`),
+  
+  // Lấy các trận đấu sắp tới
+  getUpcomingMatches: () => api.get<Match[]>("/matches/list/upcoming"),
 
   // Lấy trận đấu theo mùa giải
   getBySeason: (seasonId: number) =>
