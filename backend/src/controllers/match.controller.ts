@@ -342,6 +342,19 @@ async getResultsBySeason(req: Request, res: Response) {
     }
   }
 
+  async getUpcomingMatches(req: Request, res: Response) {
+    try {
+      const data = await MatchService.getUpcomingMatches();
+      res.json(data);
+    } catch (err: any) {
+      console.error("Get upcoming matches error:", err);
+      res.status(500).json({
+        message: "Không thể lấy danh sách trận đấu sắp tới",
+        error: process.env.NODE_ENV === "development" ? err.stack : undefined,
+      });
+    }
+  }
+
   // ===== RESULT ENDPOINTS =====
 
   // Lấy kết quả tất cả trận đấu

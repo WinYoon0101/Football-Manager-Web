@@ -16,4 +16,9 @@ router.get("/", UserController.listUsers);
 // Gửi id trực tiếp
 router.get("/:id", UserController.getById);
 
+// Tạo user mới
+router.post("/", UserController.createUser);
+
+// Xóa user
+router.delete("/:id", UserController.deleteUser);
 export default router;

@@ -250,6 +250,34 @@ async create(data: {
     });
   }
 
+  // Lấy tất cả trận đấu sắp diễn ra
+  async getUpcomingMatches(limit: number = 5) {
+    const matches = await prisma.match.findMany({
+      where: {
+        matchTime: {
+          gt: new Date(),
+        },
+      },
+      include: {
+        team1: {
+          select: {name: true, image: true, id: true, homeStadium: true}
+        },
+        team2: {
+          select: {name: true, image: true, id: true}
+        },
+        round: {
+          select: {name: true, id: true}
+        }
+      },
+      orderBy: {
+        matchTime: "asc",
+      },
+      take: limit,
+    });
+    
+    return matches;
+  }
+
   // ===== RESULT METHODS =====
 
   // Lấy kết quả tất cả trận đấu

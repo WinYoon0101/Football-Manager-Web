@@ -5,6 +5,7 @@ export interface LoginResponse {
     id: number;
     email: string;
     name: string | null;
+    role?: string;
   };
   token: string;
 }
@@ -13,6 +14,7 @@ export interface RegisterResponse {
   id: number;
   email: string;
   name: string | null;
+  role: string;
 }
 
 export interface LoginRequest {

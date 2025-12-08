@@ -22,11 +22,10 @@ class UserController {
   // PATCH /users/me
   async updateProfile(req: any, res: Response) {
     try {
-      const userId = req.user?.id;
-      if (!userId) return res.status(400).json({ message: "Auth token required" });
-
-      const { name } = req.body;
-      const updated = await userService.updateProfile(userId, { name });
+      // const userId = req.user?.id;
+      const { id, name, email, role, teamId, password } = req.body;
+      if (!id) return res.status(400).json({ message: "Auth token required" });
+      const updated = await userService.updateProfile(Number(id), { name, email, role, teamId, password });
 
       // Trả về trực tiếp user
       res.json(updated);
@@ -65,6 +64,37 @@ class UserController {
       res.status(500).json({ error: "Server error" });
     }
   }
+
+  // POST /users 
+  async createUser(req: Request, res: Response) {
+    try {
+      const { email, password, name, role, teamId } = req.body;
+      const teamIdNumber = Number(teamId) || null;
+      const newUser = await userService.createUser({ email, password, name, role, teamId: teamIdNumber });
+
+      // Trả về trực tiếp user
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Server error" });
+    }
+  }
+  
+
+  // DELETE /users/:id
+  async deleteUser(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      if (!id || id <= 0) return res.status(400).json({ message: "ID không hợp lệ" });
+
+      await userService.deleteUser(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Server error" });
+    }
+  }
 }
+
 
 export default new UserController();

@@ -17,7 +17,7 @@ app.use(
   cors({
     origin: "*",
     credentials: true, // Cho phép gửi cookie/token
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   })
 );
 app.use(express.json());

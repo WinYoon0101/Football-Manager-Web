@@ -31,6 +31,22 @@ export interface Season {
   endDate: string | null;
 }
 
+export interface StandingTeam {
+  team: {
+    id: number;
+    name: string;
+    image: string | null;
+  };
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}
+
 export interface SeasonRanking {
   id: number;
   seasonId: number;
@@ -51,5 +67,46 @@ export interface SeasonRanking {
   };
 }
 
+export interface Round {
+  id: number;
+  name: string;
 
+  matches?: Match[];
+}
 
+export interface Match {
+  id: number;
+  roundId: number;
+  team1Id: number;
+  team2Id: number;
+  seasonId?: number;
+  matchTime: string | Date;
+  stadium?: string | null;
+
+  // Quan hệ
+  round?: Round;
+  team1?: Team;
+  team2?: Team;
+  goals?: Goal[];
+}
+
+export interface Goal {
+  id: number;
+  matchId: number;
+  teamId: number;
+  playerId: number;
+  goalTypeId: number;
+  minute: number;
+
+  match?: Match;
+  team?: Team;
+  player?: Player;
+  goalType?: GoalType;
+}
+
+export interface GoalType {
+  id: number;
+  name: string;
+
+  goals?: Goal[];
+}
