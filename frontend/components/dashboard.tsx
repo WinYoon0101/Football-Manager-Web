@@ -7,11 +7,12 @@ import {
   Users,
   FileText,
   Settings,
-  Menu,
+
   X,
   Home,
   UserCircle,
   Shield,
+  LogOut,
 } from "lucide-react";
 
 import OverviewModule from "./modules/overview";
@@ -21,10 +22,13 @@ import SeasonsModule from "./modules/seasons";
 import ReportsModule from "./modules/reports";
 import SettingsModule from "./modules/settings";
 import UsersModule from "./modules/users";
+import { useRouter } from "next/navigation";
+import { clearAuth } from "@/lib/utils/auth";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+   const router = useRouter();
 
   const navItems = [
     { id: "overview", label: "Tổng Quan", icon: Home },
@@ -35,6 +39,12 @@ export default function Dashboard() {
     { id: "users", label: "Người Dùng", icon: UserCircle },
     { id: "settings", label: "Cài Đặt", icon: Settings },
   ];
+
+    const handleLogout = () => {
+    clearAuth();
+    localStorage.removeItem("playerDashboardTab");
+    router.push("/login");
+  };
 
   const pageBackgroundStyle = {
     backgroundImage:
@@ -73,7 +83,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-white">FOOTBALL</h1>
-                <p className="text-xs text-gray-200">SERIES</p>
+                <p className="text-xs text-gray-200">SE104</p>
               </div>
             </div>
             <Button
@@ -115,7 +125,20 @@ export default function Dashboard() {
             );
           })}
         </nav>
+
+           {/* Logout Button */}
+        <div className="p-4 border-t border-white/20">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-6 py-4 rounded-lg text-base text-white/80 bg-white/20 hover:bg-red-400/40 transition-all"
+          >
+            <LogOut className="h-6 w-6" />
+            Đăng xuất
+          </button>
+        </div>
       </aside>
+
+    
 
       {/* Right Content */}
       <div className="flex-1 flex flex-col overflow-hidden min-h-0">

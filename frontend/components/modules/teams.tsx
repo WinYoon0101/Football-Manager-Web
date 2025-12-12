@@ -42,10 +42,12 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
-import type { Team } from "@/lib/types";
+import type { Player, Team } from "@/lib/types";
 import { toast } from "react-toastify";
 
 import { teamsAPI } from "@/lib/api/teams";
+import { playersAPI } from "@/lib/api/players";
+
 
 export default function TeamsModule() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -220,6 +222,159 @@ export default function TeamsModule() {
     }
   };
 
+  // ADD PLAYER
+  const [showAddPlayer, setShowAddPlayer] = useState(false);
+  const [newPlayer, setNewPlayer] = useState({
+    name: "",
+    birthDate: "",
+    playerTypeId: 1, 
+    notes: "",
+    image: null as File | null,
+  });
+  const [previewPlayerImg, setPreviewPlayerImg] = useState<string | null>(null);
+
+  const handleFileChangePlayer = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setNewPlayer({ ...newPlayer, image: file });
+    setPreviewPlayerImg(URL.createObjectURL(file));
+  };
+
+  const handleAddPlayer = async () => {
+    if (!selectedTeam) return;
+
+    if (!newPlayer.name || !newPlayer.birthDate) {
+      toast.error("Vui lòng nhập đầy đủ thông tin cầu thủ!");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const created = await playersAPI.create({
+        name: newPlayer.name,
+        birthDate: newPlayer.birthDate,
+        teamId: selectedTeam.id,
+        playerTypeId: Number(newPlayer.playerTypeId),
+        notes: newPlayer.notes,
+        image: newPlayer.image ?? undefined,
+      });
+
+      // update vào UI — tránh phải reload API
+      setSelectedTeam((prev) => ({
+        ...prev!,
+        players: [...(prev!.players ?? []), created],
+      }));
+
+      toast.success("Thêm cầu thủ thành công!");
+      setShowAddPlayer(false);
+
+      setNewPlayer({
+        name: "",
+        birthDate: "",
+        playerTypeId: 1,
+        notes: "",
+        image: null,
+      });
+      setPreviewPlayerImg(null);
+    } catch (err) {
+      toast.error("Không thể thêm cầu thủ!");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  //State Edit + Delete Player
+const [showEditPlayer, setShowEditPlayer] = useState(false);
+const [editPlayer, setEditPlayer] = useState<any>(null);
+
+const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+const [deletePlayerId, setDeletePlayerId] = useState<number | null>(null);
+
+const [isUpdating, setIsUpdating] = useState(false);
+
+const handleOpenEdit = (player: Player) => {
+  const rawDate = player.birthDate;
+
+  const formattedDate =
+    rawDate instanceof Date
+      ? rawDate.toISOString().substring(0, 10) // Date → YYYY-MM-DD
+      : rawDate
+      ? rawDate.substring(0, 10) // string → YYYY-MM-DD
+      : "";
+
+  setEditPlayer({
+    ...player,
+    birthDate: formattedDate,
+    imageFile: null,
+  });
+
+  setShowEditPlayer(true);
+};
+
+
+const handleOpenDelete = (id: number) => {
+  setDeletePlayerId(id);
+  setShowDeleteConfirm(true);
+};
+
+const handleUpdatePlayer = async () => {
+  if (!editPlayer || !selectedTeam) return;
+
+  try {
+    setIsUpdating(true);
+
+    const updated = await playersAPI.update(editPlayer.id, {
+      name: editPlayer.name,
+      birthDate: editPlayer.birthDate,
+      playerTypeId: editPlayer.playerTypeId,
+      notes: editPlayer.notes,
+      image: editPlayer.imageFile ?? undefined,
+    });
+
+    // Cập nhật trực tiếp UI
+    setSelectedTeam((prev) => ({
+      ...prev!,
+      players: prev!.players!.map((p) =>
+        p.id === updated.id ? updated : p
+      ),
+    }));
+
+    toast.success("Cập nhật thành công!");
+
+    setShowEditPlayer(false);
+    setEditPlayer(null);
+  } catch (err) {
+    toast.error("Lỗi khi cập nhật!");
+  } finally {
+    setIsUpdating(false);
+  }
+};
+
+const handleDeletePlayer = async () => {
+  if (!deletePlayerId || !selectedTeam) return;
+
+  try {
+    await playersAPI.delete(deletePlayerId);
+
+    // Xoá player khỏi UI
+    setSelectedTeam((prev) => ({
+      ...prev!,
+      players: prev!.players!.filter((p) => p.id !== deletePlayerId),
+    }));
+
+    toast.success("Đã xoá cầu thủ!");
+    setShowDeleteConfirm(false);
+    setDeletePlayerId(null);
+  } catch (err) {
+    toast.error("Không thể xoá cầu thủ!");
+  }
+};
+
+
+
+
+
   // ---------------------------------------
   // DETAIL PAGE
   // ---------------------------------------
@@ -289,8 +444,16 @@ export default function TeamsModule() {
 
           {/* Card danh sách cầu thủ */}
           <Card className="md:col-span-2 bg-white/5 border border-white/10 text-white backdrop-blur-md">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-white">Danh sách cầu thủ</CardTitle>
+
+              <button
+                onClick={() => setShowAddPlayer(true)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm hover:bg-white/20 transition"
+              >
+                <Plus className="w-4 h-4" />
+                Thêm cầu thủ
+              </button>
             </CardHeader>
 
             <CardContent>
@@ -305,10 +468,8 @@ export default function TeamsModule() {
                       key={p.id}
                       className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition"
                     >
+                      {/* Thông tin cầu thủ */}
                       <div className="flex items-center gap-3">
-                        {/* Avatar player nếu sau này muốn thêm */}
-                        {/* <img src={p.avatar} className="w-10 h-10 rounded-full object-cover" /> */}
-
                         <div>
                           <p className="font-semibold text-white">{p.name}</p>
                           <p className="text-xs text-white/60">
@@ -316,12 +477,259 @@ export default function TeamsModule() {
                           </p>
                         </div>
                       </div>
+
+                      {/* Nút chức năng */}
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleOpenEdit(p)} className="p-2 rounded-md hover:bg-white/10 transition">
+                          <Pencil className="w-4 h-4 text-white" />
+                        </button>
+
+                        <button onClick={() => handleOpenDelete(p.id)} className="p-2 rounded-md hover:bg-red-500/20 transition">
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </CardContent>
           </Card>
+{/* Modal thêm cầu thủ */}
+          <Dialog open={showAddPlayer} onOpenChange={setShowAddPlayer}>
+  <DialogContent className="max-w-md">
+    <DialogHeader>
+      <DialogTitle>Thêm cầu thủ</DialogTitle>
+      <DialogDescription>Điền thông tin cầu thủ</DialogDescription>
+    </DialogHeader>
+
+    <div className="space-y-4 py-2">
+      {/* Upload ảnh */}
+      <div className="flex flex-col items-center">
+        <Label className="mb-2">Ảnh cầu thủ</Label>
+
+        <label className="w-28 h-28 border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer bg-white overflow-hidden group">
+          {previewPlayerImg ? (
+            <img
+              src={previewPlayerImg}
+              className="w-full h-full object-cover rounded-xl"
+            />
+          ) : (
+            <>
+              <UploadCloud className="h-6 w-6 text-gray-400 mb-1" />
+              <span className="text-sm text-gray-500">Chọn ảnh</span>
+            </>
+          )}
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChangePlayer}
+            className="hidden"
+          />
+        </label>
+      </div>
+
+      {/* Tên cầu thủ */}
+      <div>
+        <Label>Tên cầu thủ *</Label>
+        <Input
+          value={newPlayer.name}
+          onChange={(e) =>
+            setNewPlayer({ ...newPlayer, name: e.target.value })
+          }
+        />
+      </div>
+
+      {/* Ngày sinh */}
+      <div>
+        <Label>Ngày sinh *</Label>
+        <Input
+          type="date"
+          value={newPlayer.birthDate}
+          onChange={(e) =>
+            setNewPlayer({ ...newPlayer, birthDate: e.target.value })
+          }
+        />
+      </div>
+
+      {/* Loại cầu thủ */}
+      <div>
+        <Label>Loại cầu thủ</Label>
+        <select
+          className="w-full mt-1 bg-white/10 border border-white/20 rounded-md p-2"
+          value={newPlayer.playerTypeId}
+          onChange={(e) =>
+            setNewPlayer({ ...newPlayer, playerTypeId: Number(e.target.value) })
+          }
+        >
+          <option value={1}>Trong nước</option>
+          <option value={2}>Nước ngoài</option>
+        </select>
+      </div>
+
+      {/* Ghi chú */}
+      <div>
+        <Label>Ghi chú</Label>
+        <Input
+          value={newPlayer.notes}
+          onChange={(e) =>
+            setNewPlayer({ ...newPlayer, notes: e.target.value })
+          }
+        />
+      </div>
+
+      <Button
+        className="w-full h-11"
+        onClick={handleAddPlayer}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Đang thêm...
+          </>
+        ) : (
+          "Thêm cầu thủ"
+        )}
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+{/* Modal chỉnh sửa cầu thủ */}
+<Dialog open={showEditPlayer} onOpenChange={setShowEditPlayer}>
+  <DialogContent className="max-w-md">
+    <DialogHeader>
+      <DialogTitle>Chỉnh sửa cầu thủ</DialogTitle>
+      <DialogDescription>Cập nhật thông tin cầu thủ</DialogDescription>
+    </DialogHeader>
+
+    {editPlayer && (
+      <div className="space-y-4 py-2">
+        {/* Upload ảnh */}
+        <div className="flex flex-col items-center">
+          <Label className="mb-2">Ảnh cầu thủ</Label>
+
+          <label className="w-28 h-28 border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer bg-white overflow-hidden">
+            {editPlayer.imageFile ? (
+              <img
+                src={URL.createObjectURL(editPlayer.imageFile)}
+                className="w-full h-full object-cover"
+              />
+            ) : editPlayer.image ? (
+              <img
+                src={editPlayer.image}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <>
+                <UploadCloud className="h-6 w-6 text-gray-400 mb-1" />
+                <span className="text-sm text-gray-500">Chọn ảnh</span>
+              </>
+            )}
+
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) =>
+                setEditPlayer({
+                  ...editPlayer,
+                  imageFile: e.target.files?.[0] || null,
+                })
+              }
+            />
+          </label>
+        </div>
+
+        {/* Tên cầu thủ */}
+        <div>
+          <Label>Tên cầu thủ</Label>
+          <Input
+            value={editPlayer.name}
+            onChange={(e) =>
+              setEditPlayer({ ...editPlayer, name: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Ngày sinh */}
+        <div>
+          <Label>Ngày sinh</Label>
+          <Input
+            type="date"
+            value={editPlayer.birthDate || ""}
+            onChange={(e) =>
+              setEditPlayer({ ...editPlayer, birthDate: e.target.value })
+            }
+          />
+        </div>
+
+        {/* Loại cầu thủ */}
+        <div>
+          <Label>Loại cầu thủ</Label>
+          <select
+            className="w-full bg-white/10 border border-white/20 rounded-md p-2"
+            value={editPlayer.playerTypeId}
+            onChange={(e) =>
+              setEditPlayer({
+                ...editPlayer,
+                playerTypeId: Number(e.target.value),
+              })
+            }
+          >
+            <option value={1}>Trong nước</option>
+            <option value={2}>Nước ngoài</option>
+          </select>
+        </div>
+
+        {/* Notes */}
+        <div>
+          <Label>Ghi chú</Label>
+          <Input
+            value={editPlayer.notes || ""}
+            onChange={(e) =>
+              setEditPlayer({ ...editPlayer, notes: e.target.value })
+            }
+          />
+        </div>
+
+        <Button
+          className="w-full h-11"
+          onClick={handleUpdatePlayer}
+          disabled={isUpdating}
+        >
+          {isUpdating ? "Đang cập nhật..." : "Lưu thay đổi"}
+        </Button>
+      </div>
+    )}
+  </DialogContent>
+</Dialog>
+
+{/* Modal xác nhận xóa cầu thủ */}
+<Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+  <DialogContent className="max-w-sm">
+    <DialogHeader>
+      <DialogTitle>Xác nhận xoá</DialogTitle>
+      <DialogDescription>
+        Bạn có chắc muốn xoá cầu thủ này?
+      </DialogDescription>
+    </DialogHeader>
+
+    <div className="flex justify-end gap-3 mt-5">
+      <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+        Hủy
+      </Button>
+
+      <Button
+        className="bg-red-600 hover:bg-red-700"
+        onClick={handleDeletePlayer}
+      >
+        Xoá
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+
         </div>
       </div>
     );
@@ -697,6 +1105,8 @@ export default function TeamsModule() {
           </div>
         </DialogContent>
       </Dialog>
+
+   
     </div>
   );
 }
