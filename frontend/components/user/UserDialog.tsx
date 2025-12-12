@@ -237,7 +237,7 @@ export function UserDialog({ open, onOpenChange, userToEdit, onSuccess }: UserDi
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="pl-10 h-11 bg-white border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-600 transition-colors"
-                  placeholder={isEditMode ? "•••••••• (Không đổi thì để trống)" : "••••••••"}
+                  placeholder={isEditMode ? "•••••••• (Vui lòng để trống nếu không thay đổi)" : "••••••••"}
                 />
             </div>
           </div>

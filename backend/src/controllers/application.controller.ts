@@ -168,6 +168,30 @@ async create(req: Request, res: Response) {
       });
     }
   }
+
+  // Xóa application theo team và season
+  async deleteByTeamAndSeason(req: Request, res: Response) {
+    try {
+      const teamId = Number(req.params.teamId);
+      const seasonId = Number(req.params.seasonId);
+      if (isNaN(teamId) || teamId <= 0 || isNaN(seasonId) || seasonId <= 0) {
+        return res.status(400).json({ message: "Team ID hoặc Season ID không hợp lệ" });
+      }
+      const matchCount = await ApplicationService.countMatchBySeasonAndTeam(seasonId, teamId);
+      if (matchCount > 0) {
+        return res.status(400).json({ message: "Vui lòng xóa các trận đấu liên quan trước khi xóa đội" });
+      }
+      await ApplicationService.deleteByTeamAndSeason(teamId, seasonId);
+      res.json({ message: "Đã xóa application theo team và season thành công" });
+    } catch (err: any) {
+      console.error("Delete application by team and season error:", err);
+      res.status(500).json({
+        message: "Không thể xóa application theo team và season",
+        error: process.env.NODE_ENV === "development" ? err.stack : undefined,
+      });
+    }
+}
+
 }
 
 export default new ApplicationController();

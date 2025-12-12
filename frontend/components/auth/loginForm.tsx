@@ -24,6 +24,7 @@ export function LoginForm() {
       // Gọi API đăng nhập
       const result = await login({ email, password });
 
+      
       // Lưu token vào cả localStorage và cookie
       if (result.token) {
         setAuthToken(result.token, result.user);

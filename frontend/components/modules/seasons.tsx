@@ -93,7 +93,7 @@ export default function SeasonsModule() {
     }
   }
 
-   useEffect(() => {
+  useEffect(() => {
   const loadSeasons = async () => {
     try {
       setLoading(true);

@@ -55,7 +55,7 @@ export function ForgotPasswordForm() {
 
         {/* Nút màu xanh */}
         <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700 font-bold">
-          Gửi Liên Kết
+          Đặt lại mật khẩu
         </Button>
 
         <div className="text-center">
