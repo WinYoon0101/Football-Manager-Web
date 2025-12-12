@@ -13,6 +13,8 @@ import {
   SquarePen,
   CalendarDays,
   ArrowLeft,
+  Plus,
+  UserMinus
 } from "lucide-react";
 import { Application, MatchResult, Team } from "@/lib/types";
 import { matchApi, resultApi } from "@/lib/api/matches";
@@ -97,6 +99,62 @@ export default function SeasonDetailPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [addTeamModalOpen, setAddTeamModalOpen] = useState(false);
+  const [deleteTeamId, setDeleteTeamId] = useState<number | null>(null);
+  // Danh sách tất cả đội trong hệ thống (để chọn khi thêm)
+  const [allSystemTeams, setAllSystemTeams] = useState<Team[]>([]); 
+  const [selectedTeamToAdd, setSelectedTeamToAdd] = useState<string>("");
+  // 1. Mở modal thêm đội & Load danh sách đội chưa tham gia
+  const handleOpenAddTeamModal = async () => {
+    try {
+      // Giả sử teamsAPI.getAll() lấy toàn bộ đội trong hệ thống
+      // Nếu API của bạn có phân trang, hãy chỉnh lại limit lớn hoặc search
+      const res = await teamsAPI.getAll(); 
+      const allTeams = res;
+
+      // Lọc ra những đội CHƯA có trong mùa giải hiện tại
+      const existingTeamIds = teams.map(t => t.id);
+      const available = allTeams.filter((t: Team) => !existingTeamIds.includes(t.id));
+
+      setAllSystemTeams(available);
+      setAddTeamModalOpen(true);
+    } catch (error) {
+      console.error("Lỗi load danh sách đội:", error);
+      alert("Không tải được danh sách đội!");
+    }
+  };
+
+  // 2. Xử lý thêm đội vào mùa giải
+  const handleAddTeamSubmit = async () => {
+    if (!selectedTeamToAdd) return;
+    try {
+      // Gọi API thêm đội (Bạn cần đảm bảo backend có endpoint này)
+      await applicationApi.create({teamId: Number(selectedTeamToAdd), seasonId: id, status: "accepted"});
+      
+      alert("Thêm đội thành công!");
+      setAddTeamModalOpen(false);
+      setSelectedTeamToAdd("");
+      loadData(); // Load lại dữ liệu mùa giải
+    } catch (error) {
+      console.error(error);
+      alert("Lỗi khi thêm đội!");
+    }
+  };
+
+  // 3. Xử lý xóa đội khỏi mùa giải
+  const handleRemoveTeamSubmit = async () => {
+    if (!deleteTeamId) return;
+    try {
+      // Gọi API xóa đội (Bạn cần đảm bảo backend có endpoint này)
+      await applicationApi.removeTeam(id, deleteTeamId);
+      
+      setDeleteTeamId(null);
+      loadData(); // Load lại dữ liệu
+    } catch (error) {
+      console.error(error);
+      alert("Không thể xóa đội này (có thể do đã có lịch thi đấu)!");
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside() {
@@ -150,11 +208,11 @@ export default function SeasonDetailPage() {
         seasonApi.getById(id),
         seasonApi.getRankings(id),
         resultApi.getResultsBySeason(id),
-        teamsAPI.getAll(), // lấy tất cả teams
+        applicationApi.getAcceptedTeamsBySeason(id), // lấy tất cả teams
         applicationApi.getBySeason(id),
       ]);
 
-      setTeams(teamsRes);
+      setTeams(teamsRes.data);
 
       setSeason(res.data);
 
@@ -384,172 +442,198 @@ export default function SeasonDetailPage() {
         </div>
       </div>
 
-      {/* CONTENT AREA */}
-      <div className="flex gap-10">
-        {/* LEFT (MATCHES) */}
-        <div className="flex-1">
-  <div className="shadow-sm bg-white/20 border-white/20 text-white rounded-2xl p-7 flex flex-col items-center justify-center">
-    {Object.keys(groupedMatches).length === 0 ? (
-      <div className="text-center">
-       
-        <h3 className="text-xl font-bold text-white mb-2">
-          Chưa có trận đấu nào
-        </h3>
-        <p className="text-white/80 mb-6">
-          Hãy tạo trận đấu để bắt đầu mùa giải
-        </p>
-        <button
-          onClick={() => setCreateMatchModal(true)}
-          className="px-6 py-3 rounded-xl bg-blue-700 text-white font-semibold hover:bg-blue-800 shadow"
-        >
-          + Tạo trận đấu
-        </button>
-      </div>
-    ) : (
-      Object.keys(groupedMatches)
-        .map(Number)
-        .sort((a, b) => a - b)
-        .map((roundId) => (
-          <div key={roundId}>
-            {/* HEADER VÒNG */}
-            <div className="flex items-center justify-center gap-3 mb-6 p-3 bg-blue-800 rounded-xl shadow-sm">
-              <h2 className="text-xl font-bold text-white tracking-wide">
-                {getRoundName(roundId)}
-              </h2>
+{/* CONTENT AREA */}
+<div className="flex gap-10">
+  {/* LEFT (MATCHES & TEAMS) */}
+  <div className="flex-1">
+    
+    {/* 1. THANH TAB ĐIỀU HƯỚNG */}
+    <div className="flex items-center gap-3 mb-6">
+      <button
+        onClick={() => setActiveTab("matches")}
+        className={`px-5 py-2.5 rounded-full font-semibold transition-all duration-200 ${
+          activeTab === "matches"
+            ? "bg-white text-blue-900 shadow-md"
+            : "bg-white/10 text-white hover:bg-white/20"
+        }`}
+      >
+        Lịch Thi Đấu
+      </button>
+      <button
+        onClick={() => setActiveTab("teams")}
+        className={`px-5 py-2.5 rounded-full font-semibold transition-all duration-200 ${
+          activeTab === "teams"
+            ? "bg-white text-blue-900 shadow-md"
+            : "bg-white/10 text-white hover:bg-white/20"
+        }`}
+      >
+        Danh Sách Đội ({teams.length})
+      </button>
+    </div>
+
+    {/* 2. NỘI DUNG THAY ĐỔI THEO TAB */}
+    <div className="shadow-sm bg-white/20 border-white/20 text-white rounded-2xl p-7 flex flex-col min-h-[400px]">
+      
+      {/* TRƯỜNG HỢP 1: TAB MATCHES (Code cũ của bạn) */}
+      {activeTab === "matches" && (
+        <>
+          {Object.keys(groupedMatches).length === 0 ? (
+            <div className="text-center py-10">
+              <h3 className="text-xl font-bold text-white mb-2">
+                Chưa có trận đấu nào
+              </h3>
+              <p className="text-white/80 mb-6">
+                Hãy tạo trận đấu để bắt đầu mùa giải
+              </p>
+              <button
+                onClick={() => setCreateMatchModal(true)}
+                className="px-6 py-3 rounded-xl bg-blue-700 text-white font-semibold hover:bg-blue-800 shadow"
+              >
+                + Tạo trận đấu
+              </button>
             </div>
+          ) : (
+            Object.keys(groupedMatches)
+              .map(Number)
+              .sort((a, b) => a - b)
+              .map((roundId) => (
+                <div key={roundId} className="w-full">
+                  {/* HEADER VÒNG */}
+                  <div className="flex items-center justify-center gap-3 mb-6 p-3 bg-blue-800 rounded-xl shadow-sm">
+                    <h2 className="text-xl font-bold text-white tracking-wide">
+                      {getRoundName(roundId)}
+                    </h2>
+                  </div>
 
-              {groupedMatches[roundId].map((m) => {
-                    const t1 = m.match.team1;
-                    const t2 = m.match.team2;
-                    const score = `${m.team1Goals} - ${m.team2Goals}`;
-
-                    return (
-                      <div
-                        key={m.matchId}
-                        onClick={() => router.push(`/match/${m.matchId}`)}
-                        className="
-            p-5 mb-5 rounded-2xl 
-            bg-white/70 border border-blue-100 
-            flex items-center justify-between 
-            hover:bg-blue-50/40 transition cursor-pointer
-            shadow-sm hover:shadow-md
-          "
-                      >
-                        {/* TIME */}
-                        <div className="w-[140px] text-left">
-                          <div className="text-lg font-bold text-blue-700">
-                            {new Date(m.match.matchTime).toLocaleTimeString(
-                              "vi-VN",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
+                  {groupedMatches[roundId].map((m) => {
+                     /* ... (Giữ nguyên code render item trận đấu của bạn ở đây) ... */
+                     const t1 = m.match.team1;
+                     const t2 = m.match.team2;
+                     const score = `${m.team1Goals} - ${m.team2Goals}`;
+                     return (
+                        /* Paste lại đoạn render thẻ match cũ của bạn vào đây */
+                       <div key={m.matchId} onClick={() => router.push(`/match/${m.matchId}`)} className="p-5 mb-5 rounded-2xl bg-white/70 border border-blue-100 flex items-center justify-between hover:bg-blue-50/40 transition cursor-pointer shadow-sm hover:shadow-md text-gray-800">
+                          {/* ... Nội dung thẻ match giữ nguyên ... */}
+                          {/* TIME */}
+                         <div className="w-[140px] text-left">
+                           <div className="text-lg font-bold text-blue-700">
+                             {new Date(m.match.matchTime).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                           </div>
+                           <div className="text-xs text-gray-500">
+                             {new Date(m.match.matchTime).toLocaleDateString("vi-VN")}
+                           </div>
+                         </div>
+                         {/* HOME TEAM */}
+                         <div className="flex items-center gap-3 w-[240px] justify-center">
+                           <img src={t1.image ?? TEAM_AVATAR(t1.name)} className="w-10 h-10 rounded-full object-cover border border-blue-200" />
+                           <span className="text-sm font-medium text-gray-800 truncate">{t1.name}</span>
+                         </div>
+                         {/* VS */}
+                         <div className="text-center w-[40px] font-semibold text-blue-800">VS</div>
+                         {/* AWAY TEAM */}
+                         <div className="flex items-center gap-3 w-[240px] justify-center">
+                           <span className="text-sm font-medium text-gray-800 truncate">{t2.name}</span>
+                           <img src={t2.image ?? TEAM_AVATAR(t2.name)} className="w-10 h-10 rounded-full object-cover border border-blue-200" />
+                         </div>
+                         {/* SCORE */}
+                         <div className="w-[110px] text-center text-xl font-bold text-gray-900">{score}</div>
+                         
+                         {/* MENU ICON (Giữ nguyên logic menu cũ) */}
+                         <div className="relative" ref={(el) => { menuRefs.current[m.matchId] = el; }}>
+                            {/* ... Nút menu và dropdown giữ nguyên ... */}
+                            <button onClick={(e) => { e.stopPropagation(); setOpenMenuMatchId(openMenuMatchId === m.matchId ? null : m.matchId); }} className="p-1 opacity-60 hover:opacity-100"><EllipsisVertical size={20} className="text-blue-900" /></button>
+                            {openMenuMatchId === m.matchId && (
+                                <div className="absolute right-0 top-8 bg-white border rounded-xl shadow-xl w-40 py-2 z-30" onClick={(e) => e.stopPropagation()}>
+                                    <button onClick={() => { router.push(`/match/${m.matchId}`); setOpenMenuMatchId(null); }} className="w-full text-left px-4 py-2 text-black hover:bg-gray-100">Xem chi tiết</button>
+                                    <button onClick={() => setDeleteMatchId(m.matchId)} className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">Xóa</button>
+                                </div>
                             )}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {new Date(m.match.matchTime).toLocaleDateString(
-                              "vi-VN"
-                            )}
-                          </div>
-                        </div>
-
-                        {/* HOME TEAM */}
-                        <div className="flex items-center gap-3 w-[240px] justify-center">
-                          <img
-                            src={t1.image ?? TEAM_AVATAR(t1.name)}
-                            className="w-10 h-10 rounded-full object-cover border border-blue-200"
-                          />
-                          <span className="text-sm font-medium text-gray-800 truncate">
-                            {t1.name}
-                          </span>
-                        </div>
-
-                        {/* VS */}
-                        <div className="text-center w-[40px] font-semibold text-blue-800">
-                          VS
-                        </div>
-
-                        {/* AWAY TEAM */}
-                        <div className="flex items-center gap-3 w-[240px] justify-center">
-                          <span className="text-sm font-medium text-gray-800 truncate">
-                            {t2.name}
-                          </span>
-                          <img
-                            src={t2.image ?? TEAM_AVATAR(t2.name)}
-                            className="w-10 h-10 rounded-full object-cover border border-blue-200"
-                          />
-                        </div>
-
-                        {/* SCORE */}
-                        <div className="w-[110px] text-center text-xl font-bold text-gray-900">
-                          {score}
-                        </div>
-
-                    
-                        {/* MENU ICON */}
-                        <div
-                          className="relative"
-                          ref={(el) => {
-                            menuRefs.current[m.matchId] = el; // không return gì
-                          }}
-                        >
-                          {/* BUTTON mở menu */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenMenuMatchId(
-                                openMenuMatchId === m.matchId ? null : m.matchId
-                              );
-                            }}
-                            className="p-1 opacity-60 hover:opacity-100"
-                          >
-                            <EllipsisVertical
-                              size={20}
-                              className="text-blue-900"
-                            />
-                          </button>
-
-                          {/* DROPDOWN */}
-                          {openMenuMatchId === m.matchId && (
-                            <div
-                              className="absolute right-0 top-8 bg-white border rounded-xl shadow-xl w-40 py-2 z-30"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <button
-                                onClick={() => {
-                                  router.push(`/match/${m.matchId}`);
-                                  setOpenMenuMatchId(null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-black hover:bg-gray-100"
-                              >
-                                Xem chi tiết
-                              </button>
-
-                              <button className="w-full text-left px-4 py-2 text-black hover:bg-gray-100 cursor-not-allowed">
-                                Xếp lịch
-                              </button>
-
-                              <button
-                                onClick={() => setDeleteMatchId(m.matchId)}
-                                className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
-                              >
-                                Xóa
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
+                         </div>
+                       </div>
+                     );
                   })}
+                </div>
+              ))
+          )}
+        </>
+      )}
+
+      {/* TRƯỜNG HỢP 2: TAB TEAMS (Mới thêm vào) */}
+      {/* TRƯỜNG HỢP 2: TAB TEAMS */}
+      {activeTab === "teams" && (
+        <div className="w-full">
+          
+          {/* Header của Tab Teams: Nút thêm đội */}
+          <div className="flex justify-between items-center mb-6">
+             <h3 className="text-xl font-bold text-white">
+                Danh sách đội tham dự
+             </h3>
+             <button
+               onClick={handleOpenAddTeamModal}
+               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition shadow-md"
+             >
+               <Plus size={18} /> Thêm đội
+             </button>
           </div>
-        ))
-    )}
+
+          {teams.length === 0 ? (
+            <div className="text-center py-10 bg-white/10 rounded-2xl border border-white/10">
+              <p className="text-white/80 mb-4">Chưa có đội bóng nào trong mùa giải này.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {teams.map((team) => (
+                <div
+                  key={team.id}
+                  className="group relative bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-white/50 flex flex-col items-center text-center hover:scale-[1.02] transition duration-200"
+                >
+                  
+                  {/* NÚT XÓA ĐỘI (Hiện khi hover vào card) */}
+                  <button
+                    onClick={() => setDeleteTeamId(team.id)}
+                    className="absolute top-3 right-3 p-2 bg-red-100 text-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 hover:text-white"
+                    title="Xóa đội khỏi mùa giải"
+                  >
+                    <Trash size={16} />
+                  </button>
+
+                  <img
+                    src={team.image ?? TEAM_AVATAR(team.name)}
+                    alt={team.name}
+                    className="w-20 h-20 rounded-full object-cover border-4 border-gray-200 shadow-md mb-4"
+                  />
+                  <h3 className="text-lg font-bold text-gray-800 mb-1 line-clamp-1">
+                    {team.name}
+                  </h3>
+                  
+                  <div className="text-sm text-gray-500 mb-4 flex items-center gap-1 justify-center">
+                    <span className="font-medium">Sân nhà:</span> 
+                    {team.homeStadium || "Chưa cập nhật"}
+                  </div>
+
+                  <div className="w-full grid grid-cols-1 gap-2 border-t border-gray-300 pt-3 mt-auto">
+                     {/* <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 font-semibold uppercase">Thành lập</span>
+                        <span className="text-sm font-medium text-gray-700">{team.founded || "-"}</span>
+                     </div> */}
+                     <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 font-semibold uppercase">Cầu thủ</span>
+                        <span className="text-sm font-medium text-gray-700">{team.playerCount || 0}</span>
+                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+    </div>
   </div>
-</div>
 
 
         {/* RIGHT AREA */}
-        <div className="w-[480px] shrink-0 flex flex-col gap-8">
+        <div className="w-[480px] shrink-0 flex flex-col gap-8 mt-[68px]">
           {/* RANKING */}
           <div className="shadow-sm bg-white/20 border-white/20 rounded-2xl p-6">
             <h2 className="text-xl font-bold text-white mb-5">
@@ -956,6 +1040,91 @@ export default function SeasonDetailPage() {
         seasonName={season?.name}
         onConfirm={handleDeleteSeason}
       />
+
+      {/* MODAL THÊM ĐỘI */}
+      {addTeamModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Thêm đội vào mùa giải</h2>
+              <button onClick={() => setAddTeamModalOpen(false)} className="text-gray-400 hover:text-black">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              Chọn đội bóng từ hệ thống để thêm vào giải đấu này.
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Chọn đội bóng</label>
+              <select
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                value={selectedTeamToAdd}
+                onChange={(e) => setSelectedTeamToAdd(e.target.value)}
+              >
+                <option value="">-- Chọn đội --</option>
+                {allSystemTeams.length === 0 ? (
+                  <option disabled>Không còn đội nào khả dụng</option>
+                ) : (
+                  allSystemTeams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setAddTeamModalOpen(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleAddTeamSubmit}
+                disabled={!selectedTeamToAdd}
+                className="flex-1 py-3 bg-blue-700 text-white rounded-xl font-semibold hover:bg-blue-800 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Thêm Ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL XÓA ĐỘI */}
+      {deleteTeamId !== null && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center">
+            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash size={24} />
+            </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Xóa đội bóng?</h2>
+            <p className="text-gray-600 mb-6">
+              Bạn có chắc chắn muốn xóa đội này khỏi mùa giải? <br/>
+              <span className="text-xs text-red-500">(Hành động này có thể thất bại nếu đội đã thi đấu)</span>
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTeamId(null)}
+                className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleRemoveTeamSubmit}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition"
+              >
+                Xóa Luôn
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -122,8 +122,8 @@ export const resultApi = {
     api.get<Match[]>(`/matches/season/${seasonId}`),
 
   // Lấy KẾT QUẢ theo mùa giải 
-getResultsBySeason: (seasonId: number) =>
-  api.get<MatchResult[]>(`/matches/season/${seasonId}/results`),
+  getResultsBySeason: (seasonId: number) =>
+    api.get<MatchResult[]>(`/matches/season/${seasonId}/results`),
 
   // Lấy kết quả theo vòng đấu
   getByRound: (roundId: number) =>

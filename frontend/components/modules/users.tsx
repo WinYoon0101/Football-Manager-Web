@@ -20,9 +20,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Trash, UserPlus } from "lucide-react";
+import { MoreHorizontal, Edit, Trash, UserPlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { UserDialog } from "@/components/user/UserDialog"; 
+import { UserDialog } from "@/components/user/UserDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"; 
 
 function getRoleStatus(role: string) {
   if (role === "admin") return "Admin";
@@ -41,6 +48,11 @@ export default function UsersModule() {
   const [filterStatus, setFilterStatus] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  // Delete dialog states
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ===== Fetch API =====
   const loadUsers = async () => {
@@ -59,12 +71,26 @@ export default function UsersModule() {
     loadUsers();
   }, []);
 
-  const handleDeleteUser = async (e: React.MouseEvent, user: User) => {
+  const handleDeleteUser = (e: React.MouseEvent, user: User) => {
     e.stopPropagation();
-    if(confirm(`Bạn có chắc muốn xóa user ${user.name}?`)) {
-      await userApi.delete(user.id);
-      console.log("Deleted", user.id);
-      loadUsers(); 
+    setUserToDelete(user);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      setIsSubmitting(true);
+      await userApi.delete(userToDelete.id);
+      console.log("Deleted", userToDelete.id);
+      await loadUsers();
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete user", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -124,7 +150,7 @@ export default function UsersModule() {
         />
         <Select onValueChange={setFilterStatus}>
           <SelectTrigger className="w-48 shadow-sm bg-white/10 border-white/20 text-white">
-            <SelectValue placeholder="Tình Trạng" />
+            <SelectValue placeholder="Vai trò" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả</SelectItem>
@@ -200,6 +226,43 @@ export default function UsersModule() {
             })}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xóa người dùng?</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc muốn xóa người dùng <strong>{userToDelete?.name}</strong>? Hành động này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-end gap-3 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isSubmitting}
+            >
+              Hủy
+            </Button>
+
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Đang xóa...
+                </>
+              ) : (
+                "Xóa"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

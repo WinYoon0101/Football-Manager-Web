@@ -83,11 +83,11 @@ async validateApplicationCreation(teamId: number) {
   });
 
   // Kiểm tra số lượng tối thiểu
-  if (parameter.minPlayers !== null && playerCount < parameter.minPlayers) {
-    throw new Error(
-      `Đội bóng chưa đủ số lượng cầu thủ tối thiểu để tham gia (${parameter.minPlayers} cầu thủ). Hiện có ${playerCount} cầu thủ.`
-    );
-  }
+  // if (parameter.minPlayers !== null && playerCount < parameter.minPlayers) {
+  //   throw new Error(
+  //     `Đội bóng chưa đủ số lượng cầu thủ tối thiểu để tham gia (${parameter.minPlayers} cầu thủ). Hiện có ${playerCount} cầu thủ.`
+  //   );
+  // }
 }
 
   // Tạo mới application
@@ -137,8 +137,26 @@ async validateApplicationCreation(teamId: number) {
 
     // Trả về danh sách team (loại trùng nếu cần)
     const teams = applications.map(app => app.team);
-
     return teams;
+  }
+
+  // Đếm số trận của một đội trong một mùa giải
+  async countMatchBySeasonAndTeam(seasonId: number, teamId: number) {
+    return prisma.match.count({
+      where: { 
+        seasonId,
+        OR: [
+          {team1Id: teamId},
+          {team2Id: teamId}
+        ]
+      }
+    })
+  }
+  // Xóa application theo team và season
+  async deleteByTeamAndSeason(teamId: number, seasonId: number) {
+    return prisma.application.deleteMany({
+      where: { teamId, seasonId },
+    });
   }
 
 }

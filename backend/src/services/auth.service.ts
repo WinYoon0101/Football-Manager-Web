@@ -8,7 +8,7 @@ class AuthService {
     // check if user is existing
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      throw new Error("Email is existing.");
+      throw new Error("Email đã tồn tại.");
     }
 
     // hash password
@@ -32,12 +32,12 @@ class AuthService {
   });
 
   if (!user) {
-    throw new Error("Email or password is incorrect");
+    throw new Error("Email hoặc mật khẩu không đúng");
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
-    throw new Error("Email or password is incorrect");
+    throw new Error("Email hoặc mật khẩu không đúng");
   }
 
   // tạo JWT, có thể include teamId
