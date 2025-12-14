@@ -19,7 +19,6 @@ import {
   Search,
   UploadCloud,
   ArrowLeft,
-  Trophy,
   Pencil,
   Trash2,
   Loader2,
