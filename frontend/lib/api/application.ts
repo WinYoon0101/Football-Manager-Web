@@ -47,4 +47,9 @@ export const applicationApi = {
 
   // Xóa application
   delete: (id: number) => api.delete(`/applications/${id}`),
+
+
+  // Xóa application theo team và season
+  removeTeam: (seasonId: number, teamId: number) =>
+    api.delete(`/applications/team/${teamId}/season/${seasonId}`),
 };

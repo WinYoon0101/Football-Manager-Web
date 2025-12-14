@@ -12,5 +12,6 @@ router.post("/", ApplicationController.create);
 router.put("/:id", ApplicationController.update);
 router.delete("/:id", ApplicationController.delete);
 router.get("/season/:seasonId/accepted-teams", ApplicationController.getAcceptedTeamsBySeason);
+router.delete("/team/:teamId/season/:seasonId", ApplicationController.deleteByTeamAndSeason);
 
 export default router;

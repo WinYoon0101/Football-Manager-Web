@@ -43,9 +43,9 @@ export function UpcomingMatches() {
 
       <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
           <h3 className="text-lg font-bold text-white drop-shadow-md">Lịch Thi Đấu</h3>
-          <button className="text-xs px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition border border-white/10">
+          {/* <button className="text-xs px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition border border-white/10">
             Xem tất cả
-          </button>
+          </button> */}
       </div>
       
       <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar max-h-[450px]">
