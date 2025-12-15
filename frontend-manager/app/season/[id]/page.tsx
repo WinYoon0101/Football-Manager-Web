@@ -201,6 +201,16 @@ const loadUser = async () => {
     );
   }
 
+
+  // =====================
+// KIỂM TRA MÙA GIẢI ĐÃ KẾT THÚC CHƯA
+// =====================
+const isSeasonEnded =
+  season?.endDate
+    ? new Date(season.endDate).getTime() < Date.now()
+    : false;
+
+
   const userTeamId = user?.teamId ?? null;
 
   return (
@@ -256,11 +266,18 @@ const loadUser = async () => {
         )}
       </div>
 
-      {!userApplication && (
-        <Button variant="default" onClick={openApplyModal}>
-          Đăng ký tham gia
-        </Button>
-      )}
+      {!userApplication && !isSeasonEnded && (
+  <Button variant="default" onClick={openApplyModal}>
+    Đăng ký tham gia
+  </Button>
+)}
+
+{isSeasonEnded && (
+  <div className="px-4 py-2 rounded-lg bg-gray-500/80 text-gray-200 text-sm font-semibold">
+    Mùa giải đã kết thúc
+  </div>
+)}
+
     </div>
   )}
 
