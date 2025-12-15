@@ -15,7 +15,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "*",
+    origin: true,
     credentials: true, // Cho phép gửi cookie/token
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   })
