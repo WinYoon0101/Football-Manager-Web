@@ -515,6 +515,38 @@ async getResultsBySeason(req: Request, res: Response) {
       });
     }
   }
+
+async getStandingsBySeason(req: Request, res: Response) {
+  try {
+    const seasonId = Number(req.params.seasonId);
+
+    if (isNaN(seasonId) || seasonId <= 0) {
+      return res.status(400).json({
+        message: "ID mùa giải không hợp lệ",
+      });
+    }
+
+    const season = await SeasonService.getById(seasonId);
+    if (!season) {
+      return res.status(404).json({
+        message: "Không tìm thấy mùa giải",
+      });
+    }
+
+    const data = await MatchService.getStandingsBySeason(seasonId);
+    res.json(data);
+  } catch (err: any) {
+    console.error("Get standings by season error:", err);
+    res.status(500).json({
+      message: "Không thể lấy bảng xếp hạng theo mùa giải",
+      error:
+        process.env.NODE_ENV === "development"
+          ? err.stack
+          : undefined,
+    });
+  }
+}
+  
 }
 
 export default new MatchController();

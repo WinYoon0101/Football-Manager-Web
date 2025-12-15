@@ -612,6 +612,80 @@ async create(data: {
       })),
     };
   }
+
+
+async getStandingsBySeason(seasonId: number): Promise<StandingTeam[]> {
+  // 1️⃣ Lấy parameter chung
+  const parameter = await prisma.parameter.findFirst();
+  if (!parameter) throw new Error("Chưa cấu hình Parameter cho mùa giải");
+
+  const { winScore, drawScore, loseScore, categorySort } = parameter;
+
+  // 2️⃣ Lấy danh sách team của season
+  const seasonTeamIds = await this.getSeasonTeamIds(seasonId);
+  if (!seasonTeamIds || seasonTeamIds.length === 0) return [];
+
+  // 3️⃣ Lấy matches của team theo season
+  const teams = await prisma.team.findMany({
+    where: { id: { in: seasonTeamIds } },
+    include: {
+      matchesAsTeam1: { where: { seasonId }, include: { goals: true } },
+      matchesAsTeam2: { where: { seasonId }, include: { goals: true } },
+    },
+  });
+
+  // 4️⃣ Tính BXH
+  const standings = teams.map((team) => {
+    let played = 0, won = 0, drawn = 0, lost = 0, goalsFor = 0, goalsAgainst = 0;
+
+    const handleMatch = (gf: number, ga: number) => {
+      played++;
+      goalsFor += gf;
+      goalsAgainst += ga;
+      if (gf > ga) won++;
+      else if (gf === ga) drawn++;
+      else lost++;
+    };
+
+    team.matchesAsTeam1.forEach((match) => {
+      const gf = match.goals.filter((g) => g.teamId === team.id).length;
+      const ga = match.goals.filter((g) => g.teamId !== team.id).length;
+      handleMatch(gf, ga);
+    });
+
+    team.matchesAsTeam2.forEach((match) => {
+      const gf = match.goals.filter((g) => g.teamId === team.id).length;
+      const ga = match.goals.filter((g) => g.teamId !== team.id).length;
+      handleMatch(gf, ga);
+    });
+
+    const goalDifference = goalsFor - goalsAgainst;
+    const points = won * winScore + drawn * drawScore + lost * loseScore;
+
+    return { team: { id: team.id, name: team.name, image: team.image }, played, won, drawn, lost, goalsFor, goalsAgainst, goalDifference, points };
+  });
+
+  // 5️⃣ Sort theo categorySort
+  return standings.sort((a, b) => {
+    for (const rule of categorySort) {
+      switch (rule) {
+        case "điểm":
+          if (b.points !== a.points) return b.points - a.points;
+          break;
+        case "hiệu_số":
+          if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+          break;
+        case "bàn_thắng":
+          if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+          break;
+      }
+    }
+    return 0;
+  });
+}
+
+
+
 }
 
 export default new MatchService();
