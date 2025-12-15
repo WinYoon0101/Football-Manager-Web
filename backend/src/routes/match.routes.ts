@@ -5,6 +5,11 @@ const router = Router();
 
 // Result routes (phải đặt TRƯỚC route dynamic /:id)
 router.get("/results/standings", MatchController.getStandings);
+router.get(
+  "/results/standings/season/:seasonId",
+  MatchController.getStandingsBySeason
+);
+
 router.get("/results/round/:roundId", MatchController.getResultsByRound);
 router.get("/results/team/:teamId", MatchController.getResultsByTeam);
 router.get("/results/:id", MatchController.getResultById);

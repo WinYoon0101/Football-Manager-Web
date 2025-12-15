@@ -50,6 +50,10 @@ type Ranking = {
   rank: number;
   team: string;
   image?: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
   thb: string;
   hieu: number;
   point: number;
@@ -271,34 +275,197 @@ export default function SeasonDetailPage() {
   // LOAD API
   // ======================================
 
+ function computeStandingsFromMatches(
+  matches: MatchResult[],
+  teams: Team[],
+  parameter: any
+): Ranking[] {
+  const winScore = parameter?.winScore ?? 3;
+  const drawScore = parameter?.drawScore ?? 1;
+  const loseScore = parameter?.loseScore ?? 0;
+  const categorySort: string[] =
+    Array.isArray(parameter?.categorySort) && parameter.categorySort.length
+      ? parameter.categorySort
+      : ["điểm", "hiệu_số", "bàn_thắng"];
+
+  type Stat = {
+    teamId: number;
+    name: string;
+    image: string | null | undefined;
+    played: number;
+    won: number;
+    drawn: number;
+    lost: number;
+    goalsFor: number;
+    goalsAgainst: number;
+    awayGoals: number; // bàn thắng sân khách
+  };
+
+  const statsMap = new Map<number, Stat>();
+
+  // Khởi tạo từ danh sách đội tham dự
+  teams.forEach((t) => {
+    statsMap.set(t.id, {
+      teamId: t.id,
+      name: t.name,
+      image: t.image,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      awayGoals: 0,
+    });
+  });
+
+  // Cộng dồn từ kết quả các trận
+  matches.forEach((m) => {
+    const t1 = m.match.team1; // đội chủ nhà
+    const t2 = m.match.team2; // đội khách
+    const t1Id = t1.id;
+    const t2Id = t2.id;
+    const g1 = m.team1Goals;
+    const g2 = m.team2Goals;
+
+    if (!statsMap.has(t1Id)) {
+      statsMap.set(t1Id, {
+        teamId: t1Id,
+        name: t1.name,
+        image: t1.image,
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        awayGoals: 0,
+      });
+    }
+    if (!statsMap.has(t2Id)) {
+      statsMap.set(t2Id, {
+        teamId: t2Id,
+        name: t2.name,
+        image: t2.image,
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        awayGoals: 0,
+      });
+    }
+
+    const s1 = statsMap.get(t1Id)!;
+    const s2 = statsMap.get(t2Id)!;
+
+    // Cập nhật tổng số trận, bàn thắng/thua
+    s1.played += 1;
+    s2.played += 1;
+
+    s1.goalsFor += g1;
+    s1.goalsAgainst += g2;
+
+    s2.goalsFor += g2;
+    s2.goalsAgainst += g1;
+
+    // Cập nhật bàn thắng sân khách
+    s2.awayGoals += g2; // đội khách
+
+    // Cập nhật kết quả thắng/thua/hòa
+    if (g1 > g2) {
+      s1.won += 1;
+      s2.lost += 1;
+    } else if (g1 < g2) {
+      s2.won += 1;
+      s1.lost += 1;
+    } else {
+      s1.drawn += 1;
+      s2.drawn += 1;
+    }
+  });
+
+  // Tính điểm, hiệu số và convert sang Ranking
+  const standings = Array.from(statsMap.values()).map((s) => {
+    const goalDifference = s.goalsFor - s.goalsAgainst;
+    const points =
+      s.won * winScore + s.drawn * drawScore + s.lost * loseScore;
+    return {
+      teamId: s.teamId,
+      name: s.name,
+      image: s.image,
+      played: s.played,
+      won: s.won,
+      drawn: s.drawn,
+      lost: s.lost,
+      goalsFor: s.goalsFor,
+      goalsAgainst: s.goalsAgainst,
+      goalDifference,
+      points,
+      awayGoals: s.awayGoals,
+    };
+  });
+
+  // Sort theo categorySort (điểm -> hiệu số -> bàn thắng sân khách)
+  standings.sort((a, b) => {
+    for (const rule of categorySort) {
+      switch (rule) {
+        case "điểm":
+          if (b.points !== a.points) return b.points - a.points;
+          break;
+        case "hiệu_số":
+          if (b.goalDifference !== a.goalDifference)
+            return b.goalDifference - a.goalDifference;
+          break;
+        case "bàn_thắng":
+          if (b.awayGoals !== a.awayGoals) return b.awayGoals - a.awayGoals;
+          break;
+      }
+    }
+    return 0;
+  });
+
+  // Map sang Ranking cho UI
+  return standings.map((item, index) => ({
+    rank: index + 1,
+    team: item.name || "Unknown",
+    image: item.image || TEAM_AVATAR(item.name),
+    played: item.played,
+    won: item.won,
+    drawn: item.drawn,
+    lost: item.lost,
+    thb: `${item.won}-${item.drawn}-${item.lost}`,
+    hieu: item.goalDifference,
+    point: item.points,
+  }));
+}
+
+
   async function loadData() {
     try {
       setLoading(true);
 
-      const [res, rankRes, matchRes, teamsRes, appsRes] = await Promise.all([
+      const [res, matchRes, teamsRes, appsRes, paramsRes] = await Promise.all([
         seasonApi.getById(id),
-        seasonApi.getRankings(id),
-        resultApi.getResultsBySeason(id),
-        applicationApi.getAcceptedTeamsBySeason(id), // lấy tất cả teams
+        resultApi.getResultsBySeason(id), // danh sách kết quả trận theo mùa
+        applicationApi.getAcceptedTeamsBySeason(id), // lấy tất cả teams tham dự
         applicationApi.getBySeason(id),
+        parametersAPI.getAll(), // lấy Parameter để tính điểm & sort
       ]);
 
       setTeams(teamsRes.data);
-
       setSeason(res.data);
-
       setApplications(appsRes.data);
 
-      setRankings(
-        (rankRes.data || []).map((item: any, index: number) => ({
-          rank: index + 1,
-          team: item.team?.name || "Unknown",
-          image: item.team?.image || TEAM_AVATAR(item.team?.name),
-          thb: `${item.win}-${item.draw}-${item.lose}`,
-          hieu: item.goalDifference,
-          point: item.points,
-        }))
+      const parameter = paramsRes[0];
+      const rankingsComputed = computeStandingsFromMatches(
+        matchRes.data || [],
+        teamsRes.data || [],
+        parameter
       );
+      setRankings(rankingsComputed);
+
 
       // ================================
       // GROUP MATCHES BY ROUND (ĐÃ SỬA)

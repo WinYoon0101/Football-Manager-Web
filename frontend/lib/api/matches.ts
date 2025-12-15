@@ -143,6 +143,13 @@ export const resultApi = {
         : {};
     return api.get<StandingTeam[]>("/matches/results/standings", { params });
   },
+
+  // Lấy bảng xếp hạng theo seasonId (dùng Parameter chung)
+getStandingsBySeason: (seasonId: number) =>
+  api.get<StandingTeam[]>(
+    `/matches/results/standings/season/${seasonId}`
+  ),
+
 };
 
 // Re-export goal API
