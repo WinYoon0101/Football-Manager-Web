@@ -158,14 +158,18 @@ Hệ thống cho phép quản lý đội bóng, cầu thủ, mùa giải, lịch
 
 ## 🚀 Cài đặt & Chạy dự án (Local)
 
-
-
-# Cài đặt frontend
+### Frontend
+```bash
 cd frontend
 npm install
 npm run dev
+```
 
-# Cài đặt backend
+### Backend
+```bash
 cd backend
 npm install
 npm run dev
+```
+
+
